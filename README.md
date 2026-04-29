@@ -59,4 +59,4 @@ The Team
 *   Santiago, Angelo Esuma
 
 
-Developed as a System Integration Architecture and Information Management Project - June 2026.
+Developed as a System Integration Architecture, Information Management, and Software Engineering 2 Project for the Computer Science Program - January 2026.
