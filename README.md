@@ -25,7 +25,7 @@ Key Features
 Tech Stack
 This system utilizes a Three-Tier Architecture with a unified JavaScript full-stack ecosystem.
 
-*   Frontend: React.js, Vite (Build Tool), Styled-Components, Material UI.
+*   Frontend: React.js, Vite (Build Tool), Styled-Components.
 *   Backend: Node.js, Express.js.
 *   Database: PostgreSQL (Relational DBMS optimized with indexed queries).
 *   Security: `jsonwebtoken` (JWT), `bcryptjs` (Hashing), HTTPS enforcement.
