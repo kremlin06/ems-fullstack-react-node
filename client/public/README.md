@@ -1,0 +1,1 @@
+Sor Static assets
