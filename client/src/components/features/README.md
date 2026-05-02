@@ -1,0 +1,1 @@
+For EventCard, QRScanner, etc.
