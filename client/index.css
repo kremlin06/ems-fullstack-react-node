@@ -1,0 +1,41 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Main app container - centered with edge spacing */
+#root {
+  width: 100%;
+  max-width: 1440px;  /* Nice max width for large screens */
+  margin: 0 auto;      /* Centers the content */
+  padding: 0 2rem;     /* Space on left and right edges */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  
+  /* Responsive padding for smaller screens */
+  @media (max-width: 768px) {
+    padding: 0 1.5rem;
+  }
+  
+  @media (max-width: 425px) {
+    padding: 0 1rem;
+  }
+}
+
+/* Remove default heading margins */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+/* Remove default paragraph margins */
+p {
+  margin: 0;
+}
