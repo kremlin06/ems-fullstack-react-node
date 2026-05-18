@@ -79,65 +79,6 @@ export const AuthProvider = ({ children }) => {
       setUser(prev => prev ? { ...prev, ...updatedData } : null);
    };
 
-   /*
-   okay, buckle up, because this one-liner is doing way more heavy lifting than it looks like
-   and if you don't get how functional state updates work, you're about to have a bad time
-
-   setUser(prev => prev ? { ...prev, ...updatedData } : null);
-
-   breakdown, because apparently we can't trust anyone to just "know" this stuff:
-
-   - setUser() is the state setter from useState, standard react boilerplate
-   but here we're passing a FUNCTION instead of a direct value
-   why? because we need the PREVIOUS state value, and react guarantees this is the freshest copy
-   if you just did setUser({ ...user, ...updatedData }) you might be working with stale state
-   and then you'll wonder why your ui doesn't update and you'll spend 3 hours debugging
-   don't be that person. use the functional update form. end of story.
-
-   - (prev => ...) is an arrow function that receives the current state value as 'prev'
-   'prev' is just a variable name, could be 'banana' for all react cares, but let's be professionals
-   this function runs right before react commits the state update, so it's always in sync
-   if you're not sure why that matters, imagine two state updates firing in quick succession
-   yeah. exactly. that's why.
-
-   - prev ? ... : null is a ternary operator, aka "the if-else that got lazy and moved to one line"
-   it checks: is there a previous user object? (is prev truthy?)
-   if YES: do the spread magic below
-   if NO: just return null, because we can't update properties on nothing, genius
-
-   - { ...prev, ...updatedData } is the spread operator doing its thing
-   first, ...prev copies all existing properties from the old user object into a new object
-   then, ...updatedData copies the new/changed properties ON TOP of that
-   this means updatedData will OVERWRITE any matching keys from prev
-   example: if prev has { name: 'john', role: 'user' } and updatedData is { role: 'admin' }
-   result is { name: 'john', role: 'admin' } -- see? role got updated, name stayed
-   this is immutable update pattern, because react state must be treated as read-only
-   if you mutate state directly (user.role = 'admin'), react won't re-render and you'll cry
-   yes, i've seen it happen. no, i didn't enjoy debugging it.
-
-   - the whole thing returns a brand new object, which setUser then uses to update state
-   new object = new reference = react sees a change = component re-renders
-   same reference = react shrugs and does nothing = you think your code is broken
-   it's not broken. you just don't understand referential equality. yet.
-
-   - why not just do setUser(updatedData)? 
-   because updatedData might only have a subset of fields (like just { role: 'admin' })
-   and if you replace the whole user object with just that, you lose name, email, preferences, etc
-   then the ui breaks, users complain, and guess who gets paged at midnight?
-   yeah. me. because you didn't spread the previous state.
-
-   - why the null fallback? 
-   because if user is somehow null (edge case, race condition, user logged out mid-update, whatever)
-   we don't want to crash trying to spread null (which throws "cannot spread non-iterable")
-   so we gracefully return null, which keeps state consistent (still logged out)
-   defensive programming, look it up.
-
-   tl;dr: this line safely merges new data into the existing user state without mutation,
-         handles the edge case where user doesn't exist, and uses react's functional update
-         pattern to avoid stale state bugs. if you change this without understanding why,
-         you're volunteering to debug auth issues on a friday afternoon. your call.
-   */
-
    // returning the context provider with all the auth stuff in the value object
    // any component wrapped by this provider can now use useAuth() to get these values
    return (
