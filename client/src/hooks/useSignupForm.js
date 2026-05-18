@@ -18,7 +18,6 @@ export const useSignupForm = (initialValues = {}, options = {}) => {
    const [showPassword, setShowPassword] = useState(false);
    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-   // Password strength calculation
    const passwordStrength = useMemo(() => {
       const pwd = formData.password;
       if (!pwd) return '';
@@ -37,13 +36,12 @@ export const useSignupForm = (initialValues = {}, options = {}) => {
          ...prev,
          [name]: type === 'checkbox' ? checked : value,
       }));
-      // Clear error when user types
+      // when user removes something it becomes an error
       if (errors[name]) {
          setErrors(prev => ({ ...prev, [name]: null }));
       }
    }, [errors]);
 
-   // Validation wrapper
    const validate = useCallback(() => {
       const validationErrors = validateSignupForm(formData, {
          allowedDepartments: options.allowedDepartments,
@@ -53,7 +51,6 @@ export const useSignupForm = (initialValues = {}, options = {}) => {
       return validationErrors;
    }, [formData, options]);
 
-   // Toggle handlers
    const togglePasswordVisibility = useCallback(() => {
       setShowPassword(prev => !prev);
    }, []);
@@ -62,7 +59,6 @@ export const useSignupForm = (initialValues = {}, options = {}) => {
       setShowConfirmPassword(prev => !prev);
    }, []);
 
-   // Reset form
    const reset = useCallback(() => {
       setFormData({
          fullName: '',
@@ -89,7 +85,7 @@ export const useSignupForm = (initialValues = {}, options = {}) => {
       togglePasswordVisibility,
       toggleConfirmPasswordVisibility,
       reset,
-      setFormData, // expose for advanced use cases
-      setErrors,   // expose for advanced use cases
+      setFormData,
+      setErrors,   
    };
 };
