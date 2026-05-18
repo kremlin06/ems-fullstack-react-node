@@ -4,17 +4,40 @@
 // don't forget to switch, or we'll wonder why our real credentials don't work
 import api from './api'; 
 
-export const loginApi = async ({ identifier, password }) => {
+// export const loginApi = async ({ identifier, password }) => {
 
-  const response = await api.post('/auth/login', { identifier, password });
-  return response.data;
+//   const response = await api.post('/auth/login', { identifier, password });
+//   return response.data;
+// };
+
+// client/src/services/auth.js
+
+export const loginApi = async ({ identifier, password }) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const validUsers = [
+        { identifier: 'admin', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
+        { identifier: 'admin@sti.edu', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
+      ];
+
+      const match = validUsers.find(
+        u => u.identifier === identifier && u.password === password
+      );
+
+      if (match) {
+        resolve({ token: 'mock-token-' + Date.now(), user: match.user });
+      } else {
+        reject({ status: 401, message: 'Invalid credentials' });
+      }
+    }, 1500);
+  });
 };
 
-export const registerApi = async ({ fullname, email, studentId, department, password}) => {
+export const registerApi = async ({ fullName, email, studentId, department, password}) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       // basic mock validation
-      if (!fullname || !email || !studentId || !department || !password) {
+      if (!fullName || !email || !studentId || !department || !password) {
         reject({ status: 400, response: { data: { message: 'All fields required' } } });
         return;
       }
@@ -31,7 +54,7 @@ export const registerApi = async ({ fullname, email, studentId, department, pass
       // mock success, return token and user with AUTO-ASSIGNED ROLE
       resolve({ 
         token: 'mock-token-' + Date.now(), 
-        user: { id: Date.now(), fullname, email, studentId: studentId.toUpperCase(), department, role: 'Attendee', } 
+        user: { id: Date.now(), fullName, email, studentId: studentId.toUpperCase(), department, role: 'Attendee', } 
       });
     }, 1500);
   });
