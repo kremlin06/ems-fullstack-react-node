@@ -53,10 +53,26 @@ export const NavLink = styled.a`
    text-decoration: none;
    font-size: 0.95rem;
    font-weight: 500;
-   transition: ${props => props.theme.transitions.default};
+   transition: ${props => props.theme.transitions.fast};
 
    &:hover {
       color: ${props => props.theme.colors.textPrimary};
+   }
+
+   &.active {
+      color: ${props => props.theme.colors.textPrimary};
+      font-weight: 600;  
+   }
+
+   /* special style for auth page links to make them stand out */
+   &[href="/login"],
+   &[href="/signup"] {
+      font-weight: 600;
+      color: ${props => props.theme.colors.accentPrimary};
+      
+      &:hover {
+         color: ${props => props.theme.colors.accentHover};
+      }
    }
 `;
 
