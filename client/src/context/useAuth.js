@@ -6,6 +6,6 @@ import AuthContext from './AuthContext'
 // the error check ensures you don't use this outside the provider, which would break
 export const useAuth = () => {
    const context = useContext(AuthContext);
-   if (!context) throw new Error('useAuth must be used within AuthProvider');
+   if (!context) throw new Error('useAuth must be used within AuthProvider.' + 'Wrap your component tree with <AuthProvider>.');
    return context;
 };
