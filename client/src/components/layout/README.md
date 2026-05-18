@@ -1,1 +1,0 @@
-For Header, Footer, Sidebar
