@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 // our register api call, make sure the mock exists in auth.js
 import { registerApi } from '../services/auth';
-import useAuth from '../contexts/useAuth';
+import { useAuth } from '../contexts/useAuth';
 
 import { useSignupForm } from '../hooks/useSignupForm';
 

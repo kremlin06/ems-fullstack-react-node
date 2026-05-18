@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { loginApi } from '../services/auth';
 import ToastContainer from '../components/ToastContainer';
 import { Link } from 'react-router-dom';
-
+import { useAuth } from '../contexts/useAuth';
 
 // the main login component function
 // this is where the magic (and bugs) happen
@@ -51,6 +51,7 @@ const Login = () => {
    // navigate hook from react router, for redirecting after login
    // use this instead of window.location or you'll break the single page app magic
    const navigate = useNavigate();
+   const { login } = useAuth();
 
    // the main login handler, triggered when form is submitted
    // async because we're waiting for an api call, obviously
@@ -64,57 +65,73 @@ const Login = () => {
       setIsLoading(true);
       
       try {
-         // we will simulate API call here for now then we will replace this with actual fetch/axios call to our backend.
-         // calling our auth service function
-         // this is either a mock or a real api call, depending on which version is uncommented in auth.js
-         // pray it's the right one
          const response = await loginApi({ identifier, password });
+         login(response.token, response.user);
+         navigate('/dashboard', { replace: true });
 
-         // checking if response is ok
-         // note: our mock returns { ok: true }, real api might use status codes
-         // consistency is for people who plan ahead
-         if (response.ok) {
-            // logging success to console, because console.log is our debugger now
-            // don't leave this in production, but for now, whatever
-            console.log('Login successful:', response.data);
-            // window.Location.href = '/dashboard'; or use React Router navigate
-
-            // storing the token in localStorage
-            // yes, localStorage has security issues, but we'll deal with that later
-            // if you're reading this in production and we still use localStorage, i'm sorry
-            localStorage.setItem('authToken', response.data.token);
-
-            // navigating to dashboard, replace: true so user can't go back to login with back button
-            // small ux win, you're welcome
-            navigate("/dashboard", { replace: true });
-         }
       } catch (error) {
-         // error handling time
-         // checking for 401 unauthorized, the most common login error
-         // error structure might vary between mock and real api, hence the optional chaining
          if (error.status === 401 || error.response?.status === 401) {
-            // setting error toast for invalid credentials
-            // generic message, don't reveal if username or password was wrong (security 101)
-            setToast({
-               type: 'error',
-               message: 'Invalid Credentials. Please check your username/email and password.'
-            });
+         setToast({ type: 'error', message: 'Invalid credentials. Please check your username/email and password.' });
          } else {
-            // catch-all for other errors (network issues, server down, etc)
-            // vague message because users don't need to know our backend is on fire
-            setToast({
-               type: 'error',
-               message: 'Something went wrong. Please try again.'
-            });
+         setToast({ type: 'error', message: 'Something went wrong. Please try again.' });
          }
-         // logging the full error to console for debugging
-         // this is where we'll spend 2 hours when something breaks, good luck
          console.error('Login error:', error);
       } finally {
-         // no matter what happened, turn off loading state
-         // otherwise button stays disabled forever and users rage quit
          setIsLoading(false);
       }
+
+      // try {
+      //    // we will simulate API call here for now then we will replace this with actual fetch/axios call to our backend.
+      //    // calling our auth service function
+      //    // this is either a mock or a real api call, depending on which version is uncommented in auth.js
+      //    // pray it's the right one
+      //    const response = await loginApi({ identifier, password });
+
+      //    // checking if response is ok
+      //    // note: our mock returns { ok: true }, real api might use status codes
+      //    // consistency is for people who plan ahead
+      //    if (response.ok) {
+      //       // logging success to console, because console.log is our debugger now
+      //       // don't leave this in production, but for now, whatever
+      //       console.log('Login successful:', response.data);
+      //       // window.Location.href = '/dashboard'; or use React Router navigate
+
+      //       // storing the token in localStorage
+      //       // yes, localStorage has security issues, but we'll deal with that later
+      //       // if you're reading this in production and we still use localStorage, i'm sorry
+      //       localStorage.setItem('authToken', response.data.token);
+
+      //       // navigating to dashboard, replace: true so user can't go back to login with back button
+      //       // small ux win, you're welcome
+      //       navigate("/dashboard", { replace: true });
+      //    }
+      // } catch (error) {
+      //    // error handling time
+      //    // checking for 401 unauthorized, the most common login error
+      //    // error structure might vary between mock and real api, hence the optional chaining
+      //    if (error.status === 401 || error.response?.status === 401) {
+      //       // setting error toast for invalid credentials
+      //       // generic message, don't reveal if username or password was wrong (security 101)
+      //       setToast({
+      //          type: 'error',
+      //          message: 'Invalid Credentials. Please check your username/email and password.'
+      //       });
+      //    } else {
+      //       // catch-all for other errors (network issues, server down, etc)
+      //       // vague message because users don't need to know our backend is on fire
+      //       setToast({
+      //          type: 'error',
+      //          message: 'Something went wrong. Please try again.'
+      //       });
+      //    }
+      //    // logging the full error to console for debugging
+      //    // this is where we'll spend 2 hours when something breaks, good luck
+      //    console.error('Login error:', error);
+      // } finally {
+      //    // no matter what happened, turn off loading state
+      //    // otherwise button stays disabled forever and users rage quit
+      //    setIsLoading(false);
+      // }
    };
 
    // simple toggle function for password visibility
