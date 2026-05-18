@@ -7,7 +7,7 @@ import Onboarding from './pages/Onboarding';
 import Footer from './components/Footer';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import Navbar from './components/Navbar';
+// import Navbar from './components/Navbar';
 import ToastContainer from './components/ToastNotification';
 import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
@@ -35,7 +35,7 @@ const AppContent = () => {
   return (
     <StyledThemeProvider theme={theme}>
       <GlobalStyle />
-      <Navbar />
+      {/* <Navbar /> */}
       <ToastContainer />
       <Routes>
         <Route path="/" element={<Onboarding />} />
