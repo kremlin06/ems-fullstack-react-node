@@ -3,7 +3,7 @@ import { MoonSVG } from './SVGs';
 import { useState } from 'react';
 import Modal from './Modal';
 import PrivacyPolicyContent from './PrivacyPolicyContent';
-import TermsContent from './TermsContent';
+import TermsOfServiceContent from './TermsOfServiceContent';
 
 const Footer = () => {
    const [activeModal, setActiveModal] = useState(null);
@@ -141,7 +141,7 @@ const Footer = () => {
          </Modal>
 
          <Modal isOpen={activeModal === 'terms'} onClose={closeModal} title="Terms and Conditions">
-            <TermsContent />
+            <TermsOfServiceContent />
          </Modal>
 
       </FooterSection>

@@ -1,11 +1,12 @@
 import Button, { ButtonContainer } from './Button';
 import { HeroSection, HeroContainer, HeroContent, HeroTitle, HeroSubtitle, HeroButtons, HeroMockup, MockupWindow, WindowHeader, WindowControls, Control, WindowTitle, WindowTime, WindowContent, MockupDashboard, MockupSidebar, SidebarItem, MockupMain, MockupHeader, MockupStats, StatCard, StatNumber, StatLabel, } from '../styles/Hero.styles';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
    return (
       <HeroSection>
          <HeroContainer>
-            {/* Left Side: Content */}
+            {/* left side: content */}
             <HeroContent>
                <HeroTitle>Event Management System</HeroTitle>
                <HeroSubtitle>
@@ -14,13 +15,13 @@ const Hero = () => {
                </HeroSubtitle>
                <HeroButtons>
                   <ButtonContainer>
-                     <Button variant="primary">Get Started</Button>
+                     <Button variant="primary" as={Link} to="/login">Get Started</Button>
                      <Button variant="secondary">Learn More</Button>
                   </ButtonContainer>
                </HeroButtons>
             </HeroContent>
 
-            {/* Right Side: 3D Mockup */}
+            {/* right side: 3D mockup */}
             <HeroMockup>
                <MockupWindow>
                   <WindowHeader>
