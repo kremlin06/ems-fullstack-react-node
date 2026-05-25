@@ -1,3 +1,4 @@
+// utils/tokenUtils.js
 export const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -19,7 +20,7 @@ export const isTokenExpired = (token) => {
   if (!token) return true;
   const decoded = decodeToken(token);
   if (!decoded?.exp) return true;
-  // add 5-minute buffer
+  // Add 5-minute buffer
   return decoded.exp * 1000 < Date.now() - 300000;
 };
 
