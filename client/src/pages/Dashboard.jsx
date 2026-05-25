@@ -4,17 +4,20 @@ import { useAuth } from '../contexts/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-import StatCard from '../components/Dashboard/StatCard';
-import QuickActionMenu from '../components/Dashboard/QuickActionMenu';
-import AttendanceOverview from '../components/Dashboard/AttendanceOverview';
-import ActivityList from '../components/Dashboard/ActivityList';
-import UpcomingEvents from '../components/Dashboard/UpcomingEvents';
+import StatCard from '../components/Dashboards/Shared/StatCard';
+import QuickActionMenu from '../components/Dashboards/Admin/QuickActionMenu';
+import AttendanceOverview from '../components/Dashboards/Admin/AttendanceOverview';
+import AdminActivityLog from '../components/Dashboards/Admin/AdminActivityLog';
+import UpcomingEvents from '../components/Dashboards/UpcomingEvents/UpcomingEvents';
+
+import { useAdminDashboard } from '@hooks/dashboards/useAdminDashboard';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { notifications } = useAdminDashboard();
 
   // redirect if not authenticated - ProtectedRoute should handle this, but belt + suspenders
   useEffect(() => {
@@ -22,7 +25,7 @@ const Dashboard = () => {
       navigate('/login', { replace: true });
       return;
     }
-    
+
     // fetch events data - replace with actual api call when backend is ready
     const fetchEvents = async () => {
       try {
@@ -40,43 +43,43 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchEvents();
   }, [isAuthenticated, navigate]);
 
   // calculate stats from events data - memoize if this gets heavy
   const statsData = [
-    { 
-      label: "Total Events", 
-      value: events.length, 
+    {
+      label: "Total Events",
+      value: events.length,
       icon: <EventSVG size={20} />,
-      color: "#3b82f6", 
+      color: "#3b82f6",
       trend: "+12%",
-      type: 'total' 
+      type: 'total'
     },
-    { 
-      label: "Upcoming", 
-      value: events.filter(e => e.status === "Upcoming").length, 
+    {
+      label: "Upcoming",
+      value: events.filter(e => e.status === "Upcoming").length,
       icon: <CalendarSVG size={20} />,
-      color: "#16a34a", 
+      color: "#16a34a",
       trend: "+3",
-      type: 'upcoming' 
+      type: 'upcoming'
     },
-    { 
-      label: "Total Attendees", 
-      value: events.reduce((sum, e) => sum + (e.attendees || 0), 0), 
+    {
+      label: "Total Attendees",
+      value: events.reduce((sum, e) => sum + (e.attendees || 0), 0),
       icon: <UsersSVG size={20} />,
-      color: "#8b5cf6", 
+      color: "#8b5cf6",
       trend: "+18%",
-      type: 'attendees' 
+      type: 'attendees'
     },
-    { 
-      label: "Active Now", 
-      value: events.filter(e => e.status === "Ongoing").length, 
+    {
+      label: "Active Now",
+      value: events.filter(e => e.status === "Ongoing").length,
       icon: <ChartSVG size={20} />,
-      color: "#ea580c", 
+      color: "#ea580c",
       trend: "Live",
-      type: 'ongoing' 
+      type: 'ongoing'
     },
   ];
 
@@ -135,7 +138,7 @@ const Dashboard = () => {
 
   return (
     <S.DashboardContainer>
-      
+
       {/* Header Section - welcome message + date + notifications */}
       <S.Header>
         <div>
@@ -148,12 +151,19 @@ const Dashboard = () => {
         </div>
         <div className="dash-header-right">
           <div className="date-chip">
-            <CalendarSVG size={14}/> 
+            <CalendarSVG size={14}/>
             {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
           </div>
           <button className="icon-btn" aria-label="Notifications">
             <BellSVG />
-            <span className="notif-dot" aria-label="3 new notifications" />
+            {/* <span className="notif-dot" aria-label="3 new notifications" /> */}
+            {notifications?.some(n => n.urgency === 'high') && (
+              <span 
+                className="notif-dot" 
+                aria-label="High priority notifications"
+                role="status"
+              />
+            )}
           </button>
           <button className="icon-btn" aria-label="View analytics">
             <ChartSVG />
@@ -175,10 +185,10 @@ const Dashboard = () => {
           <QuickActionMenu actions={quickActions} />
           <AttendanceOverview events={events} />
         </S.LeftColumn>
-        
+
         {/* Right: Recent Activity + Upcoming Events */}
         <S.RightColumn>
-          <ActivityList />
+          <AdminActivityLog />
           <UpcomingEvents events={events.filter(e => e.status === 'Upcoming')} />
         </S.RightColumn>
       </S.BottomGrid>
