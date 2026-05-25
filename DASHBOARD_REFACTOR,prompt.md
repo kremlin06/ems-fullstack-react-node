@@ -1,0 +1,474 @@
+ 🎯 REFACTOR.prompt.md — Event Management System (Full Stack)
+
+> Purpose: This document guides AI assistants (Qwen, Claude, etc.) in helping build a production-ready, multi-role Event Management System with real authentication, database integration, and scalable architecture.
+
+---
+
+Project Context
+
+The Event Management System has multiple user roles (Admin, Staff, Organizer, Attendee), each requiring a different dashboard experience. Currently, there's a single `Dashboard.jsx` that doesn't distinguish roles or provide role-specific features.
+
+Current State: Mock authentication + mock API data  
+Target State: Real JWT authentication + PostgreSQL database + production-ready security
+
+---
+
+Master Roadmap (4 Phases)
+
+```
+Phase 1:  Real Authentication (JWT + Backend)
+Phase 2:  Real Database Integration (PostgreSQL + ORM)
+Phase 3:  Migration from Mock → Real (Feature flags + cutover)
+Phase 4:  Testing + Security Hardening (E2E + pentest)
+```
+
+---
+
+Phase 1: Real Authentication
+
+  CHECKED  What We Need to Build
+
+| Component | Purpose | Tech Options |
+|-----------|---------|-------------|
+| Backend Server | Handle auth requests (login, register, logout) | Node.js + Express |
+| Database | Store users, tokens, sessions | PostgreSQL (recommended) |
+| Password Hashing | Secure password storage | `bcrypt` (12 rounds) |
+| JWT Tokens | Stateless auth for API requests | `jsonwebtoken` library |
+| Refresh Token Flow | Long-term sessions without re-login | HTTP-only cookies + DB storage |
+| Email Verification (optional) | Confirm user email before login | Nodemailer + SendGrid |
+| Rate Limiting | Prevent brute-force attacks | `express-rate-limit` |
+
+Backend Files to Create
+
+```
+backend/
+├── server.js                  Entry point (Express setup)
+├── config/
+│   ├── database.js           PostgreSQL connection (pg/sequelize)
+│   ├── jwt.js                JWT config (secret, expiry)
+│   └── env.js                Load .env variables safely
+├── models/
+│   └── User.js               User schema (Sequelize/Mongoose)
+├── controllers/
+│   └── authController.js     Login, register, logout, getCurrentUser
+├── middleware/
+│   ├── auth.js               Verify JWT middleware (protect routes)
+│   ├── rateLimit.js          Brute-force protection
+│   └── validate.js           Input validation (Joi/Zod)
+├── routes/
+│   └── authRoutes.js         POST /login, /register, /logout, GET /me
+├── utils/
+│   ├── hashPassword.js       bcrypt wrapper
+│   └── generateToken.js      JWT creation helper
+├── .env.example              Template for env vars (gitignored)
+└── package.json              Backend dependencies
+```
+
+ 🔧 Frontend Changes Needed
+
+| File | Change |
+|------|--------|
+| `src/services/auth.js` | Replace mock `loginApi`/`registerApi` with real `axios` calls to backend |
+| `src/services/api.js` | Ensure JWT is attached to requests; handle 401 → redirect to login |
+| `src/contexts/AuthContext.jsx` | Update `login()` to store real JWT + user; `getCurrentUser()` to fetch from `/auth/me` |
+| `src/components/ProtectedRoute.jsx` | Keep as-is (already designed for real auth) |
+| `vite.config.js` | Add `VITE_API_URL` env var for backend endpoint |
+
+Environment Variables Needed
+
+```env
+ .env (frontend - commit to repo with .example suffix)
+VITE_API_URL=http://localhost:5000/api
+VITE_USE_MOCK_AUTH=false           Feature flag for gradual migration
+
+ .env (backend - NEVER commit real values)
+PORT=5000
+DATABASE_URL=postgresql://user:pass@localhost:5432/ems_db
+JWT_SECRET=your_super_secret_key_change_in_prod
+JWT_EXPIRE=15m
+REFRESH_TOKEN_SECRET=another_secret_key
+REFRESH_TOKEN_EXPIRE=7d
+BCRYPT_ROUNDS=12
+NODE_ENV=development
+```
+
+---
+
+Phase 2: Real Database Integration
+
+  CHECKED  What We Need to Build
+
+| Feature | Purpose | Tech Options |
+|---------|---------|-------------|
+| User Model | Store user data (email, password hash, role, profile) | Sequelize (SQL) |
+| Event Model | Store events, attendees, departments, status | Relational table |
+| Attendance Model | Track check-ins, QR codes, timestamps | Foreign keys to User + Event |
+| Activity Log Model | System events for admin feed | Append-only audit table |
+| Notifications Model | User-specific alerts + urgency | Polymorphic or separate table |
+| Database Migrations | Version-controlled schema changes | `sequelize-cli` |
+| Seed Scripts | Populate dev DB with test data | Custom JS scripts |
+
+Additional Backend Files
+
+```
+backend/
+├── models/
+│   ├── User.js
+│   ├── Event.js
+│   ├── Attendance.js
+│   ├── ActivityLog.js
+│   └── Notification.js
+├── controllers/
+│   ├── eventsController.js     CRUD for events
+│   ├── attendanceController.js  Check-in/out logic
+│   └── dashboardController.js  Aggregated data for dashboard
+├── routes/
+│   ├── eventsRoutes.js
+│   ├── attendanceRoutes.js
+│   └── dashboardRoutes.js
+├── services/
+│   ├── emailService.js         Send welcome/verification emails
+│   └── qrService.js            Generate/validate QR codes
+├── migrations/                 Auto-generated by ORM CLI
+│   ├── 20240501-create-users.js
+│   ├── 20240502-create-events.js
+│   └── ...
+└── seeds/
+    └── dev-seeds.js            Test data for development
+```
+
+ 🔧 Frontend Changes Needed
+
+| File | Change |
+|------|--------|
+| `src/services/dashboard.js` | Replace mock `getDashboardData()` with real API calls to `/api/dashboard` |
+| `src/hooks/dashboards/useAdminDashboard.js` | Update to fetch from real endpoints; handle loading/error states |
+| `src/components/Dashboards/Admin/*.jsx` | Ensure they handle `null`/`loading` states from real API |
+| `src/pages/Dashboard.jsx` | Remove hardcoded `mockEvents`; use data from `useAdminDashboard` |
+
+---
+
+Phase 3: Migration Strategy (Mock → Real)
+
+ Step-by-Step Cutover Plan
+
+1. Backend First
+   - Build and test auth + basic CRUD APIs locally
+   - Use Postman/Thunder Client to verify endpoints
+   - Seed database with test users/events
+
+2. Frontend Integration
+   - Update `api.js` to point to real backend
+   - Replace one mock function at a time (start with `loginApi`)
+   - Test each component with real data
+
+3. Feature Flags (Optional but Safe)
+   ```javascript
+   // src/config/features.js
+   export const FEATURES = {
+     USE_REAL_AUTH: import.meta.env.VITE_USE_REAL_AUTH === 'true',
+     USE_REAL_DASHBOARD: import.meta.env.VITE_USE_REAL_DASHBOARD === 'true',
+   };
+   ```
+   - Allows toggling mock/real per feature during testing
+
+4. Rollout Order
+   ```
+   Week 1: Auth (login/register/logout)  CHECKED 
+   Week 2: User profile + getCurrentUser  CHECKED   
+   Week 3: Events CRUD  CHECKED 
+   Week 4: Attendance + Activity Log  CHECKED 
+   Week 5: Dashboard aggregation + notifications  CHECKED 
+   ```
+
+---
+
+ 🧪 Phase 4: Testing + Security
+
+  CHECKED  Testing Checklist
+
+| Type | Tools | What to Test |
+|------|-------|-------------|
+| Unit Tests | Jest + Supertest | Auth controllers, middleware, utils |
+| Integration Tests | Jest + PostgreSQL test DB | Full login → dashboard flow |
+| E2E Tests | Cypress or Playwright | User signs up → logs in → sees dashboard |
+| Security Tests | `npm audit`, `snyk`, manual pentest | SQL injection, XSS, JWT tampering |
+
+Security Must-Haves
+
+- [ ] Passwords hashed with bcrypt (never store plaintext)
+- [ ] JWT secrets in `.env`, never committed to Git
+- [ ] HTTPS in production (use Vite + backend proxy or deploy separately)
+- [ ] CORS configured to allow only your frontend domain
+- [ ] Rate limiting on auth endpoints
+- [ ] Input validation on all API requests (Joi/Zod)
+- [ ] HTTP-only cookies for refresh tokens (prevent XSS theft)
+- [ ] SQL parameterization (prevent injection)
+
+---
+
+Dashboard Refactor (Original Task)
+
+ Task
+Rewrite the current `Dashboard.jsx` to become `AdminDashboard.jsx` with clear architecture that supports future `StaffDashboard.jsx`, `OrganizerDashboard.jsx`, and `AttendeeDashboard.jsx` components.
+
+ Design Principles
+
+ 1. Modularity
+- Extract reusable dashboard components into separate, purpose-built modules
+- Create dashboard-specific sub-components (e.g., `components/Dashboards/Admin/`, `components/Dashboards/Staff/`)
+- Each component should have a single responsibility and be composable
+- Avoid dashboard-specific logic leaking into shared components
+
+ 2. Reusability
+- Create abstract/generic component patterns that work across all dashboard types
+- Example: A `<StatCard>` should work for any dashboard by accepting data, icons, colors as props
+- Build a component library for dashboard elements: card layouts, stat displays, action menus, data tables
+- Share layout patterns using styled-component abstractions (e.g., `DashboardLayout`, `ContentGrid`)
+- Extract common hooks (e.g., `useDashboardStats`, `useFetchDashboardData`)
+
+ 3. Separation of Concerns
+- Presentation Logic: Components render UI based on props
+- Business Logic: Hooks handle data fetching, calculations, filtering
+- State Management: Use context for role-specific data (AuthContext already provides user role)
+- Styling: All colors, spacing, shadows from `src/styles/theme.js` — no hardcoded values
+- API Integration: Service layer (`src/services/dashboards.js`) handles API calls by role
+
+ Architecture Recommendation
+
+```
+src/
+├── pages/
+│   ├── Dashboard.jsx                    ← Router that dispatches to role-specific dashboard
+│   ├── AdminDashboard.jsx              ← NEW: Admin role dashboard
+│   ├── StaffDashboard.jsx              ← Future: Staff role dashboard
+│   ├── OrganizerDashboard.jsx          ← Future: Organizer role dashboard
+│   └── AttendeeDashboard.jsx           ← Future: Attendee role dashboard
+├── components/
+│   └── Dashboards/
+│       ├── Shared/                      ← Reusable dashboard components
+│       │   ├── StatCard.jsx             ← Generic stat card
+│       │   ├── DashboardLayout.jsx      ← Common layout grid
+│       │   ├── ActionCard.jsx           ← Action/button card
+│       │   ├── DataTable.jsx            ← Generic data table
+│       │   └── ChartContainer.jsx       ← Chart wrapper with theme support
+│       └── Admin/                       ← Admin-specific components
+│           ├── AdminStats.jsx           ← Admin stat cards calculation
+│           ├── EventManagementSection.jsx
+│           ├── AttendanceOverview.jsx
+│           ├── AdminActivityLog.jsx
+│           └── QuickActionMenu.jsx
+├── hooks/
+│   └── dashboards/
+│       ├── useAdminDashboard.js        ← Fetch admin-specific data
+│       ├── useStaffDashboard.js        ← Future: Staff data
+│       └── useDashboardStats.js        ← Shared stats calculation logic
+├── services/
+│   ├── auth.js                         ← Auth API calls (login, register, getCurrentUser)
+│   ├── api.js                          ← Axios instance with interceptors
+│   └── dashboards.js                   ← API calls for dashboard data (filtered by role)
+└── styles/
+    ├── theme.js                         ← SINGLE SOURCE OF TRUTH for all design tokens
+    └── Dashboards/
+        ├── Shared/
+        │   ├── DashboardLayout.styles.js
+        │   ├── StatCard.styles.js
+        │   └── ...
+        └── Admin/
+            ├── AdminStats.styles.js
+            ├── AttendanceOverview.styles.js
+            └── ...
+```
+
+ Theme Integration Requirements
+
+All styling must reference `src/styles/theme.js`:
+
+```javascript
+//  CHECKED  GOOD - Use theme variables
+const StatCardContainer = styled.div`
+  background-color: ${props => props.theme.colors.cardBg};
+  border-radius: ${props => props.theme.borderRadius.md};
+  padding: ${props => props.theme.spacing.lg};
+  box-shadow: ${props => props.theme.colors.shadowSm};
+  transition: all ${props => props.theme.transitions.default};
+`;
+
+// WRONG BAD - Hardcoded values
+const StatCardContainer = styled.div`
+  background-color: ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+`;
+```
+
+Use semantic color tokens for role-based theming:
+- `theme.colors.accentPrimary` for primary actions (Admin: blue, Staff: green, Organizer: purple)
+- `theme.colors.success`, `warning`, `error`, `info` for status indicators
+- `theme.colors.bgPrimary`, `bgSecondary`, `bgTertiary` for card/section backgrounds
+- `theme.spacing.*` for consistent padding/margins
+- `theme.borderRadius.*` for consistent border radius
+
+---
+
+ Key Deliverables
+
+ 1. AdminDashboard.jsx
+- Purpose: Main admin dashboard for event management, attendance tracking, system analytics
+- Features:
+  - Admin-specific stat cards (total events, active attendees, pending approvals)
+  - Event management quick actions (create, edit, delete)
+  - Attendance overview by event/department
+  - System activity log (user registrations, event changes, etc.)
+  - Admin notifications (pending approvals, system alerts)
+  - Reports/analytics section
+- Data Source: Mock `useAdminDashboard()` hook → future API integration
+
+ 2. Reusable Components Library
+- `StatCard.jsx`: Accepts `label`, `value`, `icon`, `color`, `trend`, `onClick` props
+- `DashboardLayout.jsx`: Grid wrapper with responsive breakpoints from `theme.breakpoints`
+- `ActionCard.jsx`: Card with icon, label, description, onClick
+- `DataTable.jsx`: Generic table with sorting, filtering, pagination (theme-aware)
+- `ChartContainer.jsx`: Wrapper for any chart library (ApexCharts, Recharts) with theme colors
+
+ 3. Dashboard Router (Dashboard.jsx)
+```javascript
+// Route to correct dashboard based on user role
+const Dashboard = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === 'Admin') return <AdminDashboard />;
+  if (user?.role === 'Staff') return <StaffDashboard />;
+  if (user?.role === 'Organizer') return <OrganizerDashboard />;
+  return <AttendeeDashboard />;
+};
+```
+
+ 4. useAdminDashboard Hook
+- Fetch admin-specific data (events, attendees, reports)
+- Calculate admin stats
+- Handle filters/sorting
+- Mock data for development → real API for production
+
+ 5. Dashboard Styles (Dashboards.styles.js)
+- All styled-components reference `theme.js`
+- Responsive grid layouts using `theme.breakpoints`
+- Consistent spacing with `theme.spacing.*`
+- Card styling with `theme.colors.shadow*`, `theme.borderRadius.*`, `theme.colors.*`
+
+---
+
+Code Quality Standards
+
+1. No Hardcoded Values: Every color, spacing, shadow must come from `theme.js`
+2. Prop Documentation: Add JSDoc comments explaining accepted props
+3. Error Handling: Graceful fallbacks for missing data, failed API calls
+4. Loading States: Show skeleton loaders, spinners, or placeholder content
+5. Accessibility: Semantic HTML, ARIA labels, keyboard navigation support
+6. Type Safety: Use prop-types or TypeScript for component contracts
+7. Environment Safety: Never commit `.env` files; use `.env.example` templates
+
+---
+
+File Naming Conventions
+
+- Dashboard containers: `{Role}Dashboard.jsx` (e.g., `AdminDashboard.jsx`)
+- Sub-components: Descriptive names in role folders (e.g., `EventManagementSection.jsx`)
+- Hooks: `use{Feature}.js` (e.g., `useAdminDashboard.js`)
+- Services: `{feature}.js` for API calls (e.g., `auth.js`, `dashboards.js`)
+- Styles: `{Feature}.styles.js` (e.g., `AdminDashboard.styles.js`)
+
+---
+
+Testing/Validation Checklist
+
+ After Dashboard Implementation:
+- [ ] AdminDashboard renders without errors
+- [ ] All colors use `theme.colors.*`
+- [ ] All spacing uses `theme.spacing.*`
+- [ ] All shadows use `theme.colors.shadow*`
+- [ ] Theme toggle (light/dark) works correctly on Admin dashboard
+- [ ] Responsive design works on mobile/tablet/desktop (use `theme.breakpoints`)
+- [ ] Components are reusable (no Admin-specific hardcoding in shared components)
+- [ ] Role-based routing works (`Dashboard.jsx` → correct dashboard component)
+- [ ] Mock data loads and displays correctly
+- [ ] Icons, buttons, links are accessible
+
+ After Auth + Database Integration:
+- [ ] Login/register works with real backend
+- [ ] JWT is stored securely and attached to API requests
+- [ ] 401 errors redirect to login page
+- [ ] Passwords are hashed (never plaintext in DB)
+- [ ] Database migrations run successfully
+- [ ] Seed data populates dev database
+- [ ] E2E test: User signs up → logs in → sees dashboard
+
+---
+
+Notes for AI Assistant (Qwen/Claude)
+
+- This is a foundational refactor for a multi-role system. Quality architecture now prevents chaos later.
+- Don't worry about Staff/Organizer/Attendee dashboards yet — just build AdminDashboard and reusable patterns
+- Focus on making AdminDashboard a template that other roles can follow
+- Leverage the existing `theme.js` (50+ design tokens) — it's already there, use it everywhere
+- Keep components small and composable — prefer many small components over a few giant ones
+- The `useAuth()` hook already provides `user.role` — use it for conditional rendering
+- Mock APIs with `setTimeout` delays (like `src/services/auth.js`) to keep UI/backend development parallel
+- This architecture sets the precedent for how the entire app scales; keep it clean
+- When in doubt, ask for clarification before generating code — better to confirm than to refactor later
+
+---
+
+What I Need From You (User) to Start
+
+Before generating code, the AI should ask the user to confirm:
+
+ 1. Backend Tech Stack Preference
+- [ ] Node.js + Express (JavaScript full-stack, easier context switching) ← Recommended
+- [ ] Python + FastAPI (if you prefer Python backend)
+- [ ] Other: _______
+
+ 2. Database Preference
+- [ ] PostgreSQL (recommended: relational, robust, free tier available) ← Recommended
+- [ ] MySQL (similar to Postgres, widely supported)
+- [ ] MongoDB (NoSQL, flexible schema, but less ideal for relational data)
+
+ 3. Deployment Target (for config)
+- [ ] Local only (for now)
+- [ ] Render / Railway / Fly.io (free tier PaaS)
+- [ ] VPS (DigitalOcean, Linode)
+- [ ] Other: _______
+
+ 4. Do you have a domain/SSL set up?
+- [ ] Yes → we'll configure HTTPS
+- [ ] No → we'll use localhost for dev, add HTTPS later
+
+ 5. Any existing backend code or should we start fresh?
+- [ ] Start fresh (AI will generate full backend structure) ← Recommended
+- [ ] Extend existing code (user will share what they have)
+
+---
+
+Immediate Next Step (After User Confirms)
+
+Once the user answers the 5 questions above, the AI should provide:
+
+1. Backend `package.json` with exact dependencies
+2. `.env.example` template for user to fill
+3. Database schema SQL (for PostgreSQL) or Mongoose models
+4. Step-by-step setup guide (install, migrate, seed, run)
+5. Updated frontend `auth.js` with real API calls (ready to swap)
+6. First code deliverable: `backend/server.js` + `backend/config/database.js`
+
+---
+
+ Current File to Refactor
+
+- Source: `src/pages/Dashboard.jsx`
+- Outcome: `src/pages/AdminDashboard.jsx` + supporting components + shared library + real auth backend
+
+---
+
+> 💡 Remember: This prompt is living documentation. Update it as the project evolves. When in doubt, ask the user before generating code. 🛠️✨
