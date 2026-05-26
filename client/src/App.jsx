@@ -12,6 +12,8 @@ import ToastContainer from './components/ToastNotification';
 import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import CreateEvent from './pages/Admin/CreateEvent';
+import Events from './pages/Admin/Events';
 
 // this lazy loading is for speeding up the initial load time of the app by only loading the login page when it's needed,
 // since the onboarding page is the first thing users see and it doesn't require the login page's code to be loaded immediately.
@@ -55,6 +57,22 @@ const AppContent = () => {
           <ProtectedRoute>
             <Suspense fallback={<div>Loading...</div>}>
               <Dashboard/>
+              <Footer />
+            </Suspense>
+          </ProtectedRoute>
+        } />  
+        <Route path="/dashboard/events/new" element={
+          <ProtectedRoute>
+            <Suspense fallback={<div>Loading...</div>}>
+              <CreateEvent />
+              <Footer />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/events" element={
+          <ProtectedRoute>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Events />
               <Footer />
             </Suspense>
           </ProtectedRoute>
