@@ -14,9 +14,12 @@ const Navbar = () => {
    // we create a boolean constant. If this is true, we know to hide landing-page
    // specific links (like #features) and show login-specific buttons instead.
    const isAuthPage = ['/login', '/signup'].includes(location.pathname);
-   const isDashboard = location.pathname.startsWith('/dashboard')
+   const isDashboardPage = location.pathname.startsWith('/dashboard')
    const isLoginPage = location.pathname === '/login';
    const isSignupPage = location.pathname === '/signup';
+   const isEventsPage = location.pathname === '/Admin/events';
+   const isCreateEventPage = location.pathname === '/dashboard/events/new';
+   const isAnalyticsPage = location.pathname === '/dashboard/analytics';
 
    // yes, we could make this a switch statement, but three booleans is clearer
    // if you refactor this and break the logic, you get to debug it at 2am
@@ -79,29 +82,63 @@ const Navbar = () => {
                {/* this is where admins live, show event management links + user menu */}
                {isAuthenticated && (
                   <>
-                  {/* only show these if user is actually on dashboard or event pages */}
-                  {isDashboard && (
-                     <>
-                        <NavLink as={Link} to="/dashboard" className="active">Dashboard</NavLink>
-                        <NavLink as={Link} to="/dashboard/events">Events</NavLink>
-                        <NavLink as={Link} to="/dashboard/analytics">Analytics</NavLink>
-                     </>
-                  )}
+                     {/* Show dashboard nav only on dashboard-related pages */}
+                     {isDashboardPage && (
+                        <>
+                           <NavLink 
+                              as={Link} 
+                              to="/dashboard" 
+                              className={location.pathname === '/dashboard' ? 'active' : ''}
+                           >
+                              Dashboard
+                           </NavLink>
+                           <NavLink 
+                              as={Link} 
+                              to="/Admin/events" 
+                              className={isEventsPage || isCreateEventPage ? 'active' : ''}
+                           >
+                              Events
+                           </NavLink>
+                           <NavLink 
+                              as={Link} 
+                              to="/dashboard/analytics" 
+                              className={isAnalyticsPage ? 'active' : ''}
+                           >
+                              Analytics
+                           </NavLink>
+                        </>
+                     )}
 
-                  {/* Quick Create Event button, primary action for admins */}
-                  <Button as={Link} variant="primary" to="/dashboard/events/new" size="sm"
-                  >
-                     + Create Event
-                  </Button>
-                  
-                  {/* User menu: show name + logout */}
-                  {/* if you want a dropdown, add it later, but this works for now */}
-                  <NavLink as="button" onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                     {user?.fullName?.split(' ')[0] || 'Admin'} • Logout
-                  </NavLink>
+                     {/* Quick Create Event button - always show for authenticated users on dashboard pages */}
+                     {isDashboardPage && (
+                        <Button 
+                           as={Link} 
+                           variant="primary" 
+                           to="/dashboard/events/new" 
+                           size="sm"
+                        >
+                           + Create Event
+                        </Button>
+                     )}
+                     
+                     {/* User menu with logout */}
+                     <NavLink 
+                        as="button" 
+                        onClick={handleLogout} 
+                        style={{ 
+                           background: 'none', 
+                           border: 'none', 
+                           cursor: 'pointer', 
+                           padding: 0,
+                           color: 'inherit',
+                           fontSize: 'inherit'
+                        }}
+                     >
+                        {user?.fullName?.split(' ')[0] || 'Admin'} • Logout
+                     </NavLink>
                   </>
                )}
+              
 
 
                {/* {!isLoginPage ? (

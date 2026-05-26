@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Modal from './Modal';
 import PrivacyPolicyContent from './PrivacyPolicyContent';
 import TermsOfServiceContent from './TermsOfServiceContent';
+import TechBadges from './TechBadges';
+
 
 const Footer = () => {
    const [activeModal, setActiveModal] = useState(null);
@@ -112,6 +114,8 @@ const Footer = () => {
                </FooterRight>
             </FooterContent>
          </FooterUpper>
+         
+         <TechBadges />
 
          <FooterBottom>
             <p>© 2026 Event Management System. All rights reserved.</p>

@@ -1,8 +1,29 @@
 import Button, { ButtonContainer } from './Button';
 import { HeroSection, HeroContainer, HeroContent, HeroTitle, HeroSubtitle, HeroButtons, HeroMockup, MockupWindow, WindowHeader, WindowControls, Control, WindowTitle, WindowTime, WindowContent, MockupDashboard, MockupSidebar, SidebarItem, MockupMain, MockupHeader, MockupStats, StatCard, StatNumber, StatLabel, } from '../styles/Hero.styles';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 const Hero = () => {
+   const [currentTime, setCurrentTime] = useState('');
+
+   useEffect(() => {
+      const updateTime = () => {
+         const now = new Date();
+
+         const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+         const month = now.toLocaleDateString('en-US', { month: 'short' });
+         const date = now.getDate();
+         const time = now.toLocaleDateString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+         setCurrentTime(`${day} ${month} ${date}, ${time}`);
+      };
+
+      updateTime(); // Set immediately on mount
+      const intervalId = setInterval(updateTime, 1000); // Update every second
+
+      return () => clearInterval(intervalId); // Cleanup on unmount
+   }, []);
+
    return (
       <HeroSection>
          <HeroContainer>
@@ -31,7 +52,7 @@ const Hero = () => {
                         <Control type="maximize" />
                      </WindowControls>
                      <WindowTitle>Event Management System</WindowTitle>
-                     <WindowTime>Mon May 4, 3:00 PM</WindowTime>
+                     <WindowTime>{currentTime}</WindowTime>
                   </WindowHeader>
                   <WindowContent>
                      <MockupDashboard>
