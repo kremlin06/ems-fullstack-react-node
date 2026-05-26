@@ -159,21 +159,33 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
+      
       /* calling our register api with ALL required fields for our database schema
       note: we're NOT sending 'role', backend will auto-assign 'Attendee' for public signup
       if you need to send role, uncomment the line below and update backend to validate it */
-      const response = await registerApi({
+      // const response = await registerApi({
+      //   fullName: formData.fullName.trim(),
+      //   email: formData.email.toLowerCase().trim(),
+      //   studentId: formData.studentId.trim().toUpperCase(), // normalize to uppercase for consistency
+      //   department: formData.department,
+      //   password: formData.password,
+      //   // role: 'Attendee', // backend should default this, don't trust frontend
+      // });
+
+      const { accessToken, user } = await registerApi({ 
         fullName: formData.fullName.trim(),
         email: formData.email.toLowerCase().trim(),
-        studentId: formData.studentId.trim().toUpperCase(), // normalize to uppercase for consistency
+        studentId: formData.studentId.trim.toUpperCase(),
         department: formData.department,
-        password: formData.password,
-        // role: 'Attendee', // backend should default this, don't trust frontend
+        password: formData.password 
       });
+      
+      // navigate('/dashboard', { replace: true });
 
       // auto-login after successful registration - seamless ux
       // this calls our context's login function, which sets token and user state
-      login(response.token, response.user);
+      // login(response.token, response.user);
+      login(accessToken, user);
       setToast({ type: 'success', message: 'Account created successfully! Welcome to Event Management System.' });
       // navigate to dashboard immediately, no pointless delays
       navigate('/dashboard', { replace: true });

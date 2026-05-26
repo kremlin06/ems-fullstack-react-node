@@ -26,6 +26,8 @@ import ToastContainer from '../components/ToastContainer';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 
+import useSessionExpiry from '../hooks/useSessionExpiry';
+
 // the main login component function
 // this is where the magic (and bugs) happen
 const Login = () => {
@@ -55,7 +57,7 @@ const Login = () => {
 
    // the main login handler, triggered when form is submitted
    // async because we're waiting for an api call, obviously
-   const handleLogin = async (e) => {
+   const handleSubmit = async (e) => {
       // prevent default form submission, or the page will refresh and we lose all our state
       // learned this the hard way, don't be like me
       e.preventDefault();
@@ -65,9 +67,13 @@ const Login = () => {
       setIsLoading(true);
       
       try {
-         const response = await loginApi({ identifier, password });
-         login(response.token, response.user);
-         navigate('/dashboard', { replace: true });
+         // const response = await loginApi({ identifier, password });
+         // login(response.token, response.user);
+         // navigate('/dashboard', { replace: true });
+
+         const { accessToken, user } = await loginApi({ identifier, password });
+         login(accessToken, user);           // stores token + updates AuthContext
+         navigate('/dashboard', { replace: true });      
 
       } catch (error) {
          if (error.status === 401 || error.response?.status === 401) {
@@ -159,6 +165,9 @@ const Login = () => {
    //    </div>
    // )}
 
+   useSessionExpiry(() =>
+      setToast({ type: 'warning', message: 'Your session has expired. Please log in again.' })
+   );
    return (
       <LoginPageContainer id="login">
          <Navbar />
@@ -194,7 +203,7 @@ const Login = () => {
                <LoginBox>
                   <LoginHeading>Welcome Back!</LoginHeading>
 
-                  <LoginForm onSubmit={handleLogin}>
+                  <LoginForm onSubmit={handleSubmit}>
                      <FormGroup>
                      <FormLabel htmlFor="identifier">Username or Email</FormLabel>
                      {/* input bound to identifier state, controlled component pattern */}
