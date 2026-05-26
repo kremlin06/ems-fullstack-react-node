@@ -12,27 +12,61 @@ import api from './api';
 
 // client/src/services/auth.js
 
+// modified since we are now using actual data
+/* 
+POST /api/auth/login
+Body: { idenfitifier, password }
+Returns: { accessToken, user }
+
+The refresh token is returned as an HTTP-only cookie by the backend — we never touch it here. We only store the short-lived accessToken.
+*/
+
 export const loginApi = async ({ identifier, password }) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const validUsers = [
-        { identifier: 'admin', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
-        { identifier: 'admin@sti.edu', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
-      ];
-
-      const match = validUsers.find(
-        u => u.identifier === identifier && u.password === password
-      );
-
-      if (match) {
-        resolve({ token: 'mock-token-' + Date.now(), user: match.user });
-      } else {
-        reject({ status: 401, message: 'Invalid credentials' });
-      }
-    }, 1500);
-  });
+  const response = await api.post('/auth/login', { identifier, password });
+  return response.data; // { accessToken, user }
 };
 
+// export const loginApi = asynx ({ idenfitifier, password }) => {
+//  return new Promise((resolve, reject) => {
+//     setTimeout(() => {
+//       const validUsers = [
+//         { identifier: 'admin', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
+//         { identifier: 'admin@sti.edu', password: 'admin123', user: { id: 1, fullName: 'Admin User', email: 'admin@sti.edu', role: 'Admin' } },
+//       ];
+
+//       const match = validUsers.find(
+//         u => u.identifier === identifier && u.password === password
+//       );
+
+//       if (match) {
+//         resolve({ token: 'mock-token-' + Date.now(), user: match.user });
+//       } else {
+//         reject({ status: 401, message: 'Invalid credentials' });
+//       }
+//     }, 1500);
+//   });
+// }
+
+/*
+POST /api/auth/register
+Body:    { fullName, email, studentId, department, password }
+Returns: { accessToken, user }
+
+Same shape as login on success — the backend issues tokens immediately so the user is logged in right after registering (no separate login step).
+*/
+// modified registerApi
+export const registerApi = async ({ fullName, email, studentId, department, password }) => {
+  const response = await api.post('/auth/register', {
+    fullName,
+    email,
+    studentId,
+    department,
+    password,
+  });
+  return response.data; // { accessToken, user }
+};
+
+/*
 export const registerApi = async ({ fullName, email, studentId, department, password}) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -59,7 +93,7 @@ export const registerApi = async ({ fullName, email, studentId, department, pass
     }, 1500);
   });
 };
-
+*/
 /*
 export const registerApi = async ({ username, email, password, fullName }) => {
   const response = await api.post('/auth/register', {
@@ -72,24 +106,48 @@ export const registerApi = async ({ username, email, password, fullName }) => {
 };
 */
 
+/*
+POST /api/auth/logout
+The backend clears the HTTP-only refresh token cookie AND revokes the stored hash in the DB. We clear localStorage on our side.
+*/
 export const logoutApi = async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch {
+    // Always clear local state even if the backend call fails.
+    // A network error or an already-expired token should never trap the user.
+  } finally {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    // localStorage.removeItem('refreshToken');
+  }
   // Optional: notify backend to invalidate token
-  await api.post('/auth/logout').catch(() => {}); // Fail silently
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  // await api.post('/auth/logout').catch(() => {}); // Fail silently
 };
 
-export const refreshTokenApi = async () => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) throw new Error('No refresh token');
-  
-  const response = await api.post('/auth/refresh', { refreshToken });
-  return response.data;
-};
-
+/*
+GET /api/auth/me
+Protected — the request interceptor in api.js attaches the Bearer token. Returns fresh user data from the DB (role changes are reflected immediately).
+*/
 export const getCurrentUser = async () => {
   const response = await api.get('/auth/me');
+  // modifed: added '.user'
+  return response.data.user;  // { id, fullName, email, studentId, department, role }
+};
+
+/*
+POST /api/auth/refresh
+The refresh token is sent automatically via the HTTP-only cookie.
+Returns: { accessToken }
+
+Called by the response interceptor in api.js on 401 — not called manually.
+*/
+export const refreshTokenApi = async () => {
+  // const refreshToken = localStorage.getItem('refreshToken');
+  // if (!refreshToken) throw new Error('No refresh token');
+  
+  // const response = await api.post('/auth/refresh', { refreshToken });
+  const response = await api.post('/auth/refresh');
   return response.data;
 };
 
