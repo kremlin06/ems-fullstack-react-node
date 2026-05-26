@@ -27,11 +27,11 @@ const morgan       = require('morgan');
 const { connectDB, sequelize } = require('./config/database');
 const authRoutes               = require('./routes/authRoutes');
 
-// ─── App setup ────────────────────────────────────────────────────────────────
+// App setup 
 
 const app = express();
 
-// ── CORS ──────────────────────────────────────────────────────────────────────
+// CORS
 // Parse comma-separated CORS_ORIGIN env var into an array so multiple
 // origins can be allowed without code changes (e.g. dev + staging).
 const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
@@ -48,19 +48,19 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// ── Body parsing ───────────────────────────────────────────────────────────────
+// Body parsing
 app.use(express.json({ limit: '10kb' })); // Reject absurdly large bodies early
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
-// ── Cookies ───────────────────────────────────────────────────────────────────
+// Cookies 
 app.use(cookieParser());
 
-// ── Request logging ───────────────────────────────────────────────────────────
+// Request logging
 // 'dev' format: colorised, one line per request — perfect for local dev
 // 'combined' format: Apache log format — better for log aggregation in prod
 app.use(morgan(env.isDevelopment ? 'dev' : 'combined'));
 
-// ─── Health check ────────────────────────────────────────────────────────────
+// Health check 
 // Called by Docker, Render, Railway, and load balancers.
 // Returns 200 even if the DB is down — the container is alive, just unhealthy.
 // A separate /api/health/db endpoint can check DB connectivity.
@@ -72,10 +72,10 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// Routes
 app.use('/api/auth', authRoutes);
 
-// ─── 404 handler ──────────────────────────────────────────────────────────────
+// 404 handler
 // Catches requests to routes that don't exist.
 // Must come AFTER all route registrations.
 app.use((_req, res) => {
@@ -84,7 +84,7 @@ app.use((_req, res) => {
   });
 });
 
-// ─── Global error handler ─────────────────────────────────────────────────────
+// Global error handler
 // Express calls this when next(err) is invoked or an async handler throws.
 // Four-parameter signature is required by Express to identify it as an error handler.
 // eslint-disable-next-line no-unused-vars
@@ -108,20 +108,20 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-// ─── Startup ──────────────────────────────────────────────────────────────────
+// Startup
 
 const start = async () => {
   await connectDB();
 
   const server = app.listen(env.PORT, () => {
-    console.log(`\n🚀 EMS backend running`);
+    console.log(`\n EMS backend running`);
     console.log(`   Environment : ${env.NODE_ENV}`);
     console.log(`   Port        : ${env.PORT}`);
     console.log(`   CORS origins: ${allowedOrigins.join(', ')}`);
     console.log(`   API health  : http://localhost:${env.PORT}/api/health\n`);
   });
 
-  // ─── Graceful shutdown ────────────────────────────────────────────────────
+  // Graceful shutdown
   const shutdown = async (signal) => {
     console.log(`\n[server] ${signal} received — shutting down gracefully...`);
 
