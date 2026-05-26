@@ -21,8 +21,8 @@ Returns: { accessToken, user }
 The refresh token is returned as an HTTP-only cookie by the backend — we never touch it here. We only store the short-lived accessToken.
 */
 
-export const loginApi = async ({ identifier, password }) => {
-  const response = await api.post('/auth/login', { identifier, password });
+export const loginApi = async ({ email, password }) => {
+  const response = await api.post('/auth/login', { email, password });
   return response.data; // { accessToken, user }
 };
 
