@@ -33,7 +33,8 @@ import useSessionExpiry from '../hooks/useSessionExpiry';
 const Login = () => {
    // state for the username/email field, because users can't decide which one to use
    // and we're cool with that, i guess
-   const [identifier, setIdentifier] = useState(''); // can be email or username
+   // const [identifier, setIdentifier] = useState(''); // can be email or username
+   const [email, setEmail] = useState('');
    const [password, setPassword] = useState('');
 
    // remember me checkbox state
@@ -71,7 +72,7 @@ const Login = () => {
          // login(response.token, response.user);
          // navigate('/dashboard', { replace: true });
 
-         const { accessToken, user } = await loginApi({ identifier, password });
+         const { accessToken, user } = await loginApi({ email, password });
          login(accessToken, user);           // stores token + updates AuthContext
          navigate('/dashboard', { replace: true });      
 
@@ -210,10 +211,10 @@ const Login = () => {
                      {/* autoComplete="username" helps browsers autofill, small ux win */}
                      <FormInput
                         type="text"
-                        id="identifier"
+                        id="email"
                         placeholder="Enter your username or email"
-                        value={identifier}
-                        onChange={(e) => setIdentifier(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                         autoComplete="username"
                      />
