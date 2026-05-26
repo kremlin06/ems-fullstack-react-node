@@ -25,4 +25,22 @@ export default defineConfig({
       '@SVGs': path.resolve(__dirname, './src/components/SVGs'),
     },
   },
+  server: {
+    port: 5173,
+
+    proxy: {
+      // Proxies all /api/* requests from the dev server to the backend.
+      // This eliminates CORS issues entirely during development — the browser
+      // never talks to localhost:5000 directly; Vite forwards the request.
+      //
+      // With this in place you can set VITE_API_URL='/api' in .env.development
+      // instead of the full 'http://localhost:5000/api'.
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        // Passes cookies (refresh token) through the proxy correctly.
+        secure: false,
+      },
+    },
+  },
 })
