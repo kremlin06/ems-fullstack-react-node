@@ -1,0 +1,29 @@
+# Secrets (NEVER commit these)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependencies 
+node_modules/
+
+# Logs 
+logs/
+*.log
+npm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build / Cache 
+dist/
+.cache/
+
+# Sequelize
+# Keep migrations/ and seeders/ tracked — they're part of schema history.
+# But ignore any local test databases.
+*.sqlite
+*.sqlite3

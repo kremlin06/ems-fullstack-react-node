@@ -1,0 +1,22 @@
+'use strict';
+
+const path = require('path');
+
+/**
+ * Sequelize CLI path configuration.
+ *
+ * This file tells sequelize-cli where to find config, models, migrations,
+ * and seeders — so `npx sequelize-cli db:migrate` works from any directory.
+ *
+ * Why a separate file from config/database.js?
+ * The app uses config/database.js (Sequelize instance) at runtime.
+ * Sequelize CLI needs config/sequelize.js (plain object) at migration time.
+ * Keeping them separate avoids circular deps and lets us validate env vars
+ * only when the server actually starts, not during migrations.
+ */
+module.exports = {
+  'config':          path.resolve(__dirname, 'config', 'sequelize.js'),
+  'models-path':     path.resolve(__dirname, 'models'),
+  'migrations-path': path.resolve(__dirname, 'migrations'),
+  'seeders-path':    path.resolve(__dirname, 'seeders'),
+};
