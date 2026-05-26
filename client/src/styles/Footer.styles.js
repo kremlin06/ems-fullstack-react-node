@@ -178,3 +178,33 @@ export const FooterDivider = styled.div`
    background: ${props => props.theme.colors.borderColor};
    margin: 0;
 `;
+
+export const TechStackSection = styled.div`
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   gap: 2rem;
+   padding: 1rem 0;
+   margin: 0 auto;
+   max-width: 2560px;
+`;
+
+export const TechItem = styled.div`
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+`;
+
+export const TechLogo = styled.div`
+   width: 14px;
+   height: 14px;
+   opacity: 0.5;
+`;
+
+export const TechLabel = styled.span`
+   font-size: ${props => props.theme.fontSizes.bodyXs};
+   color: ${props => props.theme.colors.textTertiary};
+   font-weight: ${props => props.theme.fontWeights.regular};
+   opacity: 0.6;
+`;
+
