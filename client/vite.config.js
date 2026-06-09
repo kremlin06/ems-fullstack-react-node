@@ -25,6 +25,35 @@ export default defineConfig({
       '@SVGs': path.resolve(__dirname, './src/components/SVGs'),
     },
   },
+  // recharts 3.x + Vite 8 (rolldown-vite) shipped with a Rolldown CJS-wrapper
+  // naming collision that produced the runtime error:
+  //   Uncaught TypeError: require_isUnsafeProperty is not a function
+  // The fix was to downgrade to Vite 7 (classic Rollup), which does not have
+  // the bug — so this config no longer needs custom optimizeDeps entries.
+  // Pre-bundle warm-up for recharts is kept as a small dev-server speed-up.
+  optimizeDeps: {
+    include: ['recharts'],
+  },
+  // ── Production bundle splitting (NFR-06) ──────────────────────────────────
+  // Route-level React.lazy() already splits each page into its own chunk.
+  // manualChunks goes one step further: it pulls big, rarely-changing vendor
+  // libraries into separate cacheable chunks so they are not re-downloaded on
+  // every app deploy, and so heavy libs (recharts) never leak into the main
+  // bundle that the login page must download.
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // react core — needed on first paint, but cached across deploys
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // recharts is large and only used by the lazy Analytics route
+          'recharts': ['recharts'],
+          // styling engine — shared by every page
+          'styled': ['styled-components'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
 
