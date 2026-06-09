@@ -1,7 +1,8 @@
 'use strict';
 
-const jwt = require('jsonwebtoken');
-const env  = require('../config/env');
+const jwt    = require('jsonwebtoken');
+const crypto = require('crypto');
+const env    = require('../config/env');
 
 /**
  * Generate a signed JWT access token.
@@ -82,12 +83,41 @@ const verifyRefreshToken = (token) => {
  * @returns {import('express').CookieOptions}
  */
 const refreshCookieOptions = (clear = false) => ({
-  httpOnly: true,                    // Not readable by JavaScript — XSS protection
-  secure:   env.COOKIE_SECURE,       // true in prod (HTTPS only), false in local dev
-  sameSite: 'strict',               // Prevents CSRF — cookie not sent cross-origin
-  maxAge:   clear ? 0 : 7 * 24 * 60 * 60 * 1000, // 7 days in ms, or expire now
-  path:     '/api/auth',            // Cookie only sent to auth endpoints — minimal scope
+  httpOnly: true,
+  secure:   env.COOKIE_SECURE,
+  // in development the frontend and backend share localhost, so SameSite=Strict is fine.
+  // in production the frontend (Vercel) and backend (Render) are on different domains.
+  // SameSite=Strict blocks the refresh token cookie from crossing domain boundaries,
+  // so the auto-refresh interceptor in api.js always gets 401 and the user gets
+  // logged out on every page refresh. switching to 'none' allows cross-origin cookies.
+  // browsers require Secure=true whenever SameSite=None is used, which is already
+  // satisfied by COOKIE_SECURE=true in production.
+  sameSite: env.COOKIE_SECURE ? 'none' : 'strict',
+  maxAge:   clear ? 0 : 7 * 24 * 60 * 60 * 1000,
+  path:     '/api/auth',
 });
+
+/**
+ * Generate a cryptographically secure password-reset token.
+ *
+ * Returns a 64-character hex string (32 random bytes).
+ * The raw token is sent to the user via email / console log in dev.
+ * Only the SHA-256 hash of this token is stored in the DB so that
+ * a database breach does not expose usable reset links.
+ *
+ * @returns {string} Raw hex token — NEVER store this directly.
+ */
+const generateResetToken = () => crypto.randomBytes(32).toString('hex');
+
+/**
+ * Hash a raw reset token for safe DB storage.
+ * Use this to store and to look up — never store the raw token.
+ *
+ * @param {string} rawToken
+ * @returns {string} SHA-256 hex digest
+ */
+const hashResetToken = (rawToken) =>
+  crypto.createHash('sha256').update(rawToken).digest('hex');
 
 module.exports = {
   generateAccessToken,
@@ -95,4 +125,6 @@ module.exports = {
   verifyAccessToken,
   verifyRefreshToken,
   refreshCookieOptions,
+  generateResetToken,
+  hashResetToken,
 };
