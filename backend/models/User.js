@@ -11,7 +11,6 @@ const { sequelize } = require('../config/database');
  * In Phase 2 we can extract Attendee/Staff into separate tables linked by userId.
  *
  * Columns
- * ───────
  * id              Auto-increment PK. Simple integer; no enumeration risk since
  *                 auth uses JWTs (not guessable ID-in-URL patterns).
  *
@@ -52,22 +51,23 @@ class User extends Model {
    *
    * @param {Object} db - All registered models
    */
-  static associate(/* db */) {
-    // Phase 2: this.hasMany(db.Attendance, { foreignKey: 'userId' });
-    // Phase 2: this.hasMany(db.Registration, { foreignKey: 'userId' });
+  static associate(db) {
+    User.hasMany(db.Registration, { foreignKey: 'userId', as: 'registrations' });
+    User.hasMany(db.SessionAssignment, { foreignKey: 'attendeeId', as: 'sessionAssignments' });
+    // User.hasMany(db.Attendance, { foreignKey: 'userId' }); // Phase 3
   }
 }
 
 User.init(
   {
-    // ── Primary Key ───────────────────────────────────────────────────────────
+    // Primary Key 
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
 
-    // ── Identity ──────────────────────────────────────────────────────────────
+    // Identity 
     fullName: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -96,7 +96,7 @@ User.init(
       },
     },
 
-    // ── Campus-specific fields ────────────────────────────────────────────────
+    // Campus-specific fields 
     studentId: {
       type: DataTypes.STRING(30),
       allowNull: true,  // Admins / Staff may not have a student ID
@@ -119,7 +119,7 @@ User.init(
       },
     },
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
+    // Auth 
     passwordHash: {
       type: DataTypes.STRING(255), // bcrypt output is 60 chars; 255 gives headroom
       allowNull: false,
@@ -148,6 +148,35 @@ User.init(
       defaultValue: null,
       field: 'refresh_token',
     },
+
+    // Password Reset 
+    passwordResetToken: {
+      // SHA-256 hash of the raw reset token sent to the user.
+      // We store only the hash so a DB breach can't be used to reset passwords.
+      // NULL means no active reset request.
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+      field: 'password_reset_token',
+    },
+
+    passwordResetExpiry: {
+      // UTC timestamp after which the reset token is invalid.
+      // Set to 1 hour from now when a reset request is created.
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: 'password_reset_expiry',
+    },
+
+    // added Phase 2 — bulk upload creates stub users for attendees who haven't self-registered.
+    // stub users have a bcrypt hash of random bytes as their password; they cannot log in.
+    isStub: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'is_stub',
+    },
   },
   {
     sequelize,
@@ -159,7 +188,7 @@ User.init(
     updatedAt: 'updatedAt',
     underscored: true,  // tells Sequelize: JS camelCase → DB snake_case automatically
 
-    // ── Scopes ────────────────────────────────────────────────────────────────
+    // Scopes 
     // Use User.scope('public') when returning user data to the client to
     // guarantee sensitive fields are never accidentally included.
     scopes: {
@@ -169,7 +198,7 @@ User.init(
       },
     },
 
-    // ── Indexes ───────────────────────────────────────────────────────────────
+    // Indexes
     indexes: [
       { unique: true, fields: ['email'] },
       { unique: true, fields: ['student_id'], where: { student_id: { [require('sequelize').Op.ne]: null } } },
@@ -178,10 +207,10 @@ User.init(
   }
 );
 
-// ── toJSON override ───────────────────────────────────────────────────────────
-// Called automatically whenever a User instance is serialised (res.json, JSON.stringify).
-// This is the LAST LINE OF DEFENCE against leaking sensitive fields.
-// Even if a future developer accidentally sends `user` directly in a response,
+// toJSON override 
+// called automatically whenever a User instance is serialised (res.json, JSON.stringify).
+// this is the LAST LINE OF DEFENCE against leaking sensitive fields.
+// even if a future developer accidentally sends `user` directly in a response,
 // passwordHash and refreshToken will be stripped.
 const originalToJSON = User.prototype.toJSON;
 User.prototype.toJSON = function () {
@@ -190,6 +219,10 @@ User.prototype.toJSON = function () {
   delete values.password_hash;
   delete values.refreshToken;
   delete values.refresh_token;
+  delete values.passwordResetToken;
+  delete values.password_reset_token;
+  delete values.passwordResetExpiry;
+  delete values.password_reset_expiry;
   return values;
 };
 

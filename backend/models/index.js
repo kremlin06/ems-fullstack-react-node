@@ -14,15 +14,32 @@
 
 const { sequelize } = require('../config/database');
 const User = require('./User');
+// added Phase 3 models: Event, Session, Registration, Attendance
+const Event = require('./Event');
+const Session = require('./Session');
+const Registration = require('./Registration');
+const Attendance = require('./Attendance');
+// added Phase 1 (audit trail): ActivityLog
+const ActivityLog = require('./ActivityLog');
+// added Phase 2: SessionAssignment (attendee ↔ session junction)
+const SessionAssignment = require('./SessionAssignment');
+// added Phase 6: Notification — persisted in-app alerts (FR-08 scan confirmations)
+const Notification = require('./Notification');
 
-// Register models
-
+// register models
 const db = {
   User,
-  sequelize,  // expose instance so callers can do db.sequelize.transaction(...)
+  Event,
+  Session,
+  Registration,
+  Attendance,
+  ActivityLog,
+  SessionAssignment,
+  Notification,
+  sequelize,
 };
 
-//Wire up associations 
+// Wire up associations
 // Each model defines a static associate(db) method.
 // Call them all here so the order never matters.
 
