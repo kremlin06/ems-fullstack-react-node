@@ -6,10 +6,10 @@ const jsPDF = require('jspdf');
 require('jspdf-autotable');
 
 // PII masking
-// Admin     → full data
-// Organizer → masked email (a*@domain), masked studentId (*-XXXX), full name
-// Staff     → masked email, masked studentId, initials-only name (A. S.)
-// Attendee  → blocked at route level before reaching here
+// Admin     -> full data
+// Organizer -> masked email (a*@domain), masked studentId (*-XXXX), full name
+// Staff     ->  masked email, masked studentId, initials-only name (A. S.)
+// Attendee  -> blocked at route level before reaching here
 
 function maskPII(row, role) {
   if (role === 'Admin') return row;
