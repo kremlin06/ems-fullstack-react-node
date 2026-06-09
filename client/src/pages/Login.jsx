@@ -12,8 +12,8 @@ import { LoginPageContainer, LoginContainer, LoginWrapper, LoginInfo, LoginTitle
 
 // form-specific styled components, because apparently we can't just use normal css
 // (we could, but then we'd have to think about class names, and nobody has time for that)
-import { FormGroup, FormLabel, FormInput, FormInputWrapper, PasswordToggle, FormOptions, CheckboxLabel, Checkbox, ForgotLink, LoginButton, } from '../styles/Form.styles';
-import { CheckmarkSVG } from '../components/SVGs';
+import { FormGroup, FormLabel, FormInput, FormInputWrapper, PasswordToggle, FormOptions, CheckboxLabel, Checkbox, ForgotLink, LoginButton, SecurityNote, } from '../styles/Form.styles';
+import { CheckmarkSVG, ShieldCheckSVG } from '../components/SVGs';
 import LoadingSpinner from '../components/LoadingSpinner';
 // toast notifications, those little popups that say "hey dumbass, you messed up"
 import ToastNotification from '../components/ToastNotification';
@@ -25,6 +25,10 @@ import { loginApi } from '../services/auth';
 import ToastContainer from '../components/ToastContainer';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
+// legal modals — privacy policy and terms of service
+import LegalModal from '../components/LegalModal';
+// help modal — 5-section quick-reference guide for all roles
+import HelpModal from '../components/HelpModal';
 
 import useSessionExpiry from '../hooks/useSessionExpiry';
 
@@ -33,8 +37,8 @@ import useSessionExpiry from '../hooks/useSessionExpiry';
 const Login = () => {
    // state for the username/email field, because users can't decide which one to use
    // and we're cool with that, i guess
-   // const [identifier, setIdentifier] = useState(''); // can be email or username
    const [email, setEmail] = useState('');
+   // const [identifier, setIdentifier] = useState(''); // can be email or username
    const [password, setPassword] = useState('');
 
    // remember me checkbox state
@@ -50,6 +54,10 @@ const Login = () => {
    // toast notification state, for showing errors or success messages
    // null means no toast, object means show toast
    const [toast, setToast] = useState(null);
+
+   // which bottom-link modal is currently open: null | 'privacy' | 'terms' | 'help'
+   const [activeModal, setActiveModal] = useState(null);
+   const closeModal = () => setActiveModal(null);
 
    // navigate hook from react router, for redirecting after login
    // use this instead of window.location or you'll break the single page app magic
@@ -72,15 +80,37 @@ const Login = () => {
          // login(response.token, response.user);
          // navigate('/dashboard', { replace: true });
 
-         const { accessToken, user } = await loginApi({ email, password });
-         login(accessToken, user);           // stores token + updates AuthContext
-         navigate('/dashboard', { replace: true });      
+         // added: pass rememberMe to the API (backend decides persistent vs session cookie)
+         // and to login() (frontend decides localStorage vs sessionStorage for the access token).
+         const { accessToken, user } = await loginApi({ email, password, rememberMe });
+         login(accessToken, user, rememberMe);
+
+         // old: only two destinations — attendees vs everyone-else-to-/dashboard
+         // problem: staff was lumped with admin and sent to /dashboard, but the
+         //          dashboard page itself kicks non-admin/organizer users out,
+         //          which caused an infinite redirect loop:          //          /dashboard -> /attendee/portal -> /dashboard -> ...
+         // fix: send each role to its own correct home page.
+         //   admin / organizer -> /dashboard       (admin overview)
+         //   staff             -> /staff/dashboard (staff home/landing page)
+         //   attendee          -> /attendee/portal (attendee home)
+         const role = user?.role;
+         if (role === 'Attendee') {
+           navigate('/attendee/portal', { replace: true });
+         } else if (role === 'Staff') {
+           navigate('/staff/dashboard', { replace: true });
+         } else {
+           // admin and organizer share the admin dashboard
+           navigate('/dashboard', { replace: true });
+         }
 
       } catch (error) {
-         if (error.status === 401 || error.response?.status === 401) {
-         setToast({ type: 'error', message: 'Invalid credentials. Please check your username/email and password.' });
+         const status = error.response?.status ?? error.status;
+         if (status === 401) {
+            setToast({ type: 'error', message: 'Invalid credentials. Please check your email and password.' });
+         } else if (status === 429) {
+            setToast({ type: 'warning', message: 'Too many login attempts. Please wait a moment and try again.' });
          } else {
-         setToast({ type: 'error', message: 'Something went wrong. Please try again.' });
+            setToast({ type: 'error', message: 'Something went wrong. Please try again.' });
          }
          console.error('Login error:', error);
       } finally {
@@ -171,7 +201,8 @@ const Login = () => {
    );
    return (
       <LoginPageContainer id="login">
-         <Navbar />
+         {/* pass onHelpClick so the navbar "Help" link opens the same modal as the bottom links */}
+         <Navbar onHelpClick={() => setActiveModal('help')} />
          <LoginContainer>
             <LoginWrapper>
            
@@ -206,7 +237,7 @@ const Login = () => {
 
                   <LoginForm onSubmit={handleSubmit}>
                      <FormGroup>
-                     <FormLabel htmlFor="identifier">Username or Email</FormLabel>
+                     <FormLabel htmlFor="email">Username or Email</FormLabel>
                      {/* input bound to identifier state, controlled component pattern */}
                      {/* autoComplete="username" helps browsers autofill, small ux win */}
                      <FormInput
@@ -242,16 +273,29 @@ const Login = () => {
                   </FormGroup>
 
                   <FormOptions>
-                     <CheckboxLabel>
-                        {/* checkbox bound to rememberMe state, currently does nothing */}
-                        {/* todo: actually implement remember me or remove this */}
+                     {/* remember me — now functional. when checked:                          frontend: access token → localStorage (persists across restarts)
+                         backend: receives rememberMe flag → sets persistent 30-day
+                                   HTTP-only refresh cookie instead of a session cookie */}
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                     <CheckboxLabel htmlFor="remember-me">
                         <Checkbox
-                           type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                           type="checkbox"
+                           id="remember-me"
+                           checked={rememberMe}
+                           onChange={(e) => setRememberMe(e.target.checked)}
+                        />
                         <span>Remember me</span>
                      </CheckboxLabel>
+                     {rememberMe && (
+                        <SecurityNote>
+                           <ShieldCheckSVG size={12} aria-hidden="true" />
+                           Session persists for 30 days. Use only on your personal device.
+                        </SecurityNote>
+                     )}
+                     </div>
                       {/* forgot password link, currently just an anchor, no functionality */}
                      {/* todo: wire this up to forgot password flow */}
-                     <ForgotLink href="#forgot">Forgot password?</ForgotLink>
+                     <ForgotLink as={Link} to="/forgot-password">Forgot password?</ForgotLink>
                      </FormOptions>
 
                      {/* submit button, disabled while loading to prevent spam */}
@@ -279,9 +323,32 @@ const Login = () => {
                </LoginBox>
 
                <LoginBottomLinks>
-               <a href="#footer-privacy">Privacy</a>
-               <a href="#footer-terms">Terms</a>
-               <a href="#help">Help</a>
+                  {/* old: anchor tags with hash hrefs — non-functional placeholder */}
+                  {/* a11y: aria-label gives each button a fuller description than
+                      the single-word visible text. screen readers will announce
+                      "View Privacy Policy, button" instead of just "Privacy, button"
+                      which gives users better context before they activate it. */}
+                  <button
+                     type="button"
+                     onClick={() => setActiveModal('privacy')}
+                     aria-label="View Privacy Policy"
+                  >
+                     Privacy
+                  </button>
+                  <button
+                     type="button"
+                     onClick={() => setActiveModal('terms')}
+                     aria-label="View Terms of Service"
+                  >
+                     Terms
+                  </button>
+                  <button
+                     type="button"
+                     onClick={() => setActiveModal('help')}
+                     aria-label="View Help and Support guide"
+                  >
+                     Help
+                  </button>
                </LoginBottomLinks>
                </LoginFormContainer>
             </LoginWrapper>
@@ -295,6 +362,17 @@ const Login = () => {
                <ToastNotification message={toast.message} type={toast.type} onClose={closeToast} />
             </ToastContainer>
          )}
+
+         {/* bottom-link modals — only one renders at a time based on activeModal */}
+         {activeModal === 'privacy' && (
+            <LegalModal type="privacy" onClose={closeModal} />
+         )}
+         {activeModal === 'terms' && (
+            <LegalModal type="terms" onClose={closeModal} />
+         )}
+         {/* old: HelpModal had its own overlay + managed isOpen via conditional render.
+             new: it wraps the shared <Modal> component, so it receives isOpen + onClose. */}
+         <HelpModal isOpen={activeModal === 'help'} onClose={closeModal} />
 
          {/* <Footer /> */}
       </LoginPageContainer>
