@@ -1,6 +1,6 @@
 'use strict';
 
-const jwt              = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const { verifyAccessToken } = require('../utils/generateTokens');
 
 /**
@@ -23,7 +23,7 @@ const { verifyAccessToken } = require('../utils/generateTokens');
  *   If you need immediate token revocation (e.g. force-logout on password change),
  *   add a `tokenVersion` column to User and include it in the JWT payload —
  *   then compare it here. That's a Phase 2 enhancement.
- *
+
  * @param {import('express').Request}  req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
@@ -31,7 +31,14 @@ const { verifyAccessToken } = require('../utils/generateTokens');
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // EventSource (SSE) cannot send custom headers, so fall back to ?token= query param
+  // for the stream endpoint. Only used when there is no Authorization header.
+  let token;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.query.token) { // parameter fallback for SSE (Server-Sent Events) clients 
+    token = req.query.token;
+  } else {
     return res.status(401).json({
       error: {
         message: 'Authentication required. Please log in.',
@@ -40,14 +47,12 @@ const verifyToken = (req, res, next) => {
     });
   }
 
-  const token = authHeader.slice(7); // Remove "Bearer " prefix
-
   try {
     const decoded = verifyAccessToken(token);
 
     // Attach only what downstream handlers need — no full DB object
     req.user = {
-      id:   decoded.sub,
+      id: decoded.sub,
       role: decoded.role,
     };
 
@@ -57,7 +62,7 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({
         error: {
           message: 'Your session has expired. Please log in again.',
-          code:    'TOKEN_EXPIRED',
+          code: 'TOKEN_EXPIRED',
         },
       });
     }
@@ -66,7 +71,7 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({
       error: {
         message: 'Invalid authentication token.',
-        code:    'INVALID_TOKEN',
+        code: 'INVALID_TOKEN',
       },
     });
   }
@@ -76,11 +81,11 @@ const verifyToken = (req, res, next) => {
  * requireRole — restricts a route to one or more specific roles.
  *
  * Must be used AFTER verifyToken (depends on req.user being set).
- *
+
  * Usage:
  *   router.get('/admin-only', verifyToken, requireRole('Admin'), handler);
  *   router.get('/staff-or-admin', verifyToken, requireRole('Admin', 'Staff'), handler);
- *
+
  * @param {...string} roles - Allowed roles (e.g. 'Admin', 'Staff')
  * @returns {import('express').RequestHandler}
  */
@@ -94,7 +99,7 @@ const requireRole = (...roles) => (req, res, next) => {
     return res.status(403).json({
       error: {
         message: 'You do not have permission to access this resource.',
-        code:    'FORBIDDEN',
+        code: 'FORBIDDEN',
       },
     });
   }
