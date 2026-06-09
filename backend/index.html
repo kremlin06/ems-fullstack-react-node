@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Management System</title>
+    <!--
+      Flash-prevention: runs BEFORE React mounts so the browser never
+      renders a frame with the wrong theme. Reads localStorage first,
+      then falls back to the OS/browser preference, then defaults to dark.
+      Must stay in sync with THEME_STORAGE_KEY in ThemeProvider.jsx ('theme-preference').
+    -->
+    <script>
+      (function () {
+        var key   = 'theme-preference';
+        var saved = localStorage.getItem(key);
+        var theme = (saved === 'light' || saved === 'dark')
+          ? saved
+          : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

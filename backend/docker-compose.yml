@@ -1,0 +1,49 @@
+# version: '3.9'
+
+# ============================================================
+# EMS Local Development — Docker Compose
+# ============================================================
+# Spins up a PostgreSQL 16 instance that matches the
+# DATABASE_URL in backend/.env.example.
+#
+# Usage:
+#   docker compose up -d        # start in background
+#   docker compose down         # stop containers (keeps volume)
+#   docker compose down -v      # stop + wipe the database volume
+#   docker compose logs -f db   # tail postgres logs
+# 
+# If the container shows Excited or unhealthy
+# Restart it: docker compose restart
+# or wipe and recreate (if needed)
+#   docker compose down -v
+#   docker compose up -d
+# ============================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ems_postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_password
+      POSTGRES_DB: ems_db
+
+    ports:
+      # host:container — only expose to localhost, not the whole network
+      - "5432:5432"
+
+    volumes:
+      # Named volume so data survives container restarts
+      - ems_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ems_user -d ems_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ems_postgres_data:
+    name: ems_postgres_data
