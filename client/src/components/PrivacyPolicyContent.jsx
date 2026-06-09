@@ -11,8 +11,7 @@ const PrivacyPolicyContent = () => {
 
          <h4>1. Information We Collect</h4>
          <p>
-            We collect only the minimal data necessary to fulfill event coordination and attendance tracking requirements:
-         </p>
+            We collect only the minimal data necessary to fulfill event coordination and attendance tracking requirements:          </p>
          <ul>
             <li><strong>User Credentials:</strong> Name, email address, and securely hashed passwords</li>
             <li><strong>Campus Identity:</strong> Student ID and academic department for the purpose of the Student Directory Lookup to prevent duplicate records</li>
@@ -44,8 +43,7 @@ const PrivacyPolicyContent = () => {
 
          <h4>5. Your Rights</h4>
          <p>
-            Under the <strong>Philippine Data Privacy Act</strong>, users have the right to:
-         </p>
+            Under the <strong>Philippine Data Privacy Act</strong>, users have the right to:          </p>
          <ul>
             <li>Inquire about the processing of their personal data</li>
             <li>Access and contest any inaccuracies in their records</li>
@@ -53,7 +51,7 @@ const PrivacyPolicyContent = () => {
          </ul>
 
          <p className="footer-note">
-            For questions about this policy, contact the EMS Development Team at <strong>ems-support@sti-balagtas.edu.ph</strong>
+            For questions about this policy, contact the EMS Development Team at <strong>ems-support@balagtas.sti.edu.ph</strong>
          </p>
       </PrivacyContainer>
    )

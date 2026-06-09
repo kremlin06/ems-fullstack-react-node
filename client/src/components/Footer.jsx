@@ -1,19 +1,16 @@
 import { FooterSection, FooterUpper, FooterContent, FooterLeft, FooterIcon, FooterDescription, FooterRight, FooterColumn, ColumnTitle, ColumnLink, FooterGiantText, GiantEMS, FooterBottom, ThemeToggle, } from '../styles/Footer.styles';
-import { MoonSVG } from './SVGs';
+import { MoonSVG, SunSVG } from './SVGs';
 import { useState } from 'react';
 import Modal from './Modal';
 import PrivacyPolicyContent from './PrivacyPolicyContent';
 import TermsOfServiceContent from './TermsOfServiceContent';
 import TechBadges from './TechBadges';
+import { useTheme } from '../hooks/useTheme';
 
 
 const Footer = () => {
    const [activeModal, setActiveModal] = useState(null);
-
-   const handleThemeToggle = () => {
-      // theme logic here
-      console.log('Theme toggled clicked.');
-   }
+   const { isDark, toggleTheme } = useTheme();
 
    const toggleModal = (type) => (e) => {
       e.preventDefault();
@@ -128,8 +125,12 @@ const Footer = () => {
             </GiantEMS>
          </FooterGiantText>
    
-         <ThemeToggle onClick={handleThemeToggle}>
-            <MoonSVG />
+         <ThemeToggle
+            onClick={toggleTheme}
+            aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+            title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+         >
+            {isDark ? <SunSVG size={18} /> : <MoonSVG size={18} />}
          </ThemeToggle>
 
          <Modal isOpen={activeModal === 'manifesto'} onClose={closeModal} title="EMS Manifesto">

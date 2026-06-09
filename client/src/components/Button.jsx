@@ -6,8 +6,7 @@ const Button = ({ children, onClick, variant = 'primary', as: Component = 'butto
    // as={Component} render as <Link>, <a>, or <button>
    // {...props} pass to, href, etc. to the rendered component
 
-   // to use Buttons that redirect to other pages, we can now do:
-   // <Button as={Link} to="/login" variant="primary">Get Started</Button>
+   // to use Buttons that redirect to other pages, we can now do:    // <Button as={Link} to="/login" variant="primary">Get Started</Button>
    // that is a primary button that navigates via React Router
 
    // a secondary button that is just a regular button

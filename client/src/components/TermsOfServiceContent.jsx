@@ -47,8 +47,7 @@ const TermsOfServiceContent = () => {
 
          <h4>5. System Limitations (Phase 1 Scope)</h4>
          <p>
-            Users acknowledge that as a Phase 1 MVP, the system does not currently support:
-         </p>
+            Users acknowledge that as a Phase 1 MVP, the system does not currently support:          </p>
          <ul>
             <li>Financial transactions or paid ticketing</li>
             <li>Advanced predictive analytics or AI-based modeling</li>
@@ -61,7 +60,7 @@ const TermsOfServiceContent = () => {
          </p>
 
          <p className="footer-note">
-            For questions about these terms, contact the EMS Development Team at <strong>ems-support@sti-balagtas.edu.ph</strong>
+            For questions about these terms, contact the EMS Development Team at <strong>ems-support@balagtas.sti.edu.ph</strong>
          </p>
       </>
    );

@@ -37,7 +37,9 @@ const Hero = () => {
                <HeroButtons>
                   <ButtonContainer>
                      <Button variant="primary" as={Link} to="/login">Get Started</Button>
-                     <Button variant="secondary">Learn More</Button>
+                     {/* old: inert button. now an anchor that smooth-scrolls to the
+                         Learn More section (global html { scroll-behavior: smooth }). */}
+                     <Button as="a" href="#learn-more" variant="secondary">Learn More</Button>
                   </ButtonContainer>
                </HeroButtons>
             </HeroContent>
