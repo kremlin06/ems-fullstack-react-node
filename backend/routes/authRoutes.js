@@ -1,9 +1,9 @@
 'use strict';
 
-const { Router }       = require('express');
-const { register, login, logout, getCurrentUser, refreshAccessToken } = require('../controllers/authController');
-const validate         = require('../middleware/validate');
-const { verifyToken }  = require('../middleware/auth');
+const { Router } = require('express');
+const { register, login, logout, getCurrentUser, refreshAccessToken, forgotPassword, resetPassword } = require('../controllers/authController');
+const validate = require('../middleware/validate');
+const { verifyToken } = require('../middleware/auth');
 const { authLimiter, registerLimiter } = require('../middleware/rateLimit');
 
 const router = Router();
@@ -37,9 +37,14 @@ const router = Router();
  */
 
 router.post('/register', registerLimiter, validate('register'), register);
-router.post('/login',    authLimiter,     validate('login'),    login);
-router.post('/logout',   authLimiter,                           logout);
-router.get( '/me',       verifyToken,                           getCurrentUser);
-router.post('/refresh',  authLimiter,                           refreshAccessToken);
+router.post('/login', authLimiter, validate('login'), login);
+router.post('/logout', authLimiter, logout);
+router.get( '/me', verifyToken, getCurrentUser);
+router.post('/refresh', authLimiter, refreshAccessToken);
+
+// Password Reset 
+// authLimiter (5 req/15 min) keeps these endpoints safe from enumeration attempts.
+router.post('/forgot-password', authLimiter, validate('forgotPassword'), forgotPassword);
+router.post('/reset-password', authLimiter, validate('resetPassword'), resetPassword);
 
 module.exports = router;
