@@ -19,15 +19,15 @@ const { hashPassword } = require('../utils/hashPassword');
 console.warn = origWarn;
 
 const RESET_LIST = [
-  { email: 'admin@sti.edu',               password: 'Admin1234'  },
-  { email: 'staff@sti.edu',               password: 'Staff1234'  },
-  { email: 'angelo@sti.edu',              password: 'Attend1234' },
-  { email: 'jhonkenth1307@gmail.com',     password: 'Attend1234' },
-  { email: 'ducutsheikaishi@gmail.com',   password: 'Attend1234' },
-  { email: 'milesderek@sti.edu',          password: 'Attend1234' },
-  { email: 'justinebuban@sti.edu',        password: 'Attend1234' },
-  { email: 'enricomiguel@sti.edu',        password: 'Attend1234' },
-  { email: 'josesoriano@sti.edu',         password: 'Attend1234' },
+  { email: 'admin@sti.edu', password: 'Admin1234'  },
+  { email: 'staff@sti.edu', password: 'Staff1234'  },
+  { email: 'angelo@sti.edu', password: 'Attend1234' },
+  { email: 'jhonkenth1307@gmail.com', password: 'Attend1234' },
+  { email: 'ducutsheikaishi@gmail.com', password: 'Attend1234' },
+  { email: 'milesderek@sti.edu', password: 'Attend1234' },
+  { email: 'justinebuban@sti.edu', password: 'Attend1234' },
+  { email: 'enricomiguel@sti.edu', password: 'Attend1234' },
+  { email: 'josesoriano@sti.edu', password: 'Attend1234' },
 ];
 
 const reset = async () => {
