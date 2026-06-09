@@ -15,7 +15,7 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('users', {
-      // Primary Key
+      //  Primary Key 
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -23,7 +23,7 @@ module.exports = {
         allowNull: false,
       },
 
-      // Identity 
+      //  Identity 
       full_name: {
         type: Sequelize.STRING(100),
         allowNull: false,
@@ -35,7 +35,7 @@ module.exports = {
         unique: true,
       },
 
-      // Campus-specific
+      //  Campus-specific 
       student_id: {
         type: Sequelize.STRING(30),
         allowNull: true,
@@ -47,7 +47,7 @@ module.exports = {
         allowNull: true,
       },
 
-      // Auth 
+      //  Auth 
       password_hash: {
         type: Sequelize.STRING(255),
         allowNull: false,
@@ -67,7 +67,7 @@ module.exports = {
         defaultValue: null,
       },
 
-      // Timestamps
+      //  Timestamps
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -81,7 +81,7 @@ module.exports = {
       },
     });
 
-    // Indexes
+    //  Indexes
     // email is already covered by the unique constraint above.
     // Add non-unique indexes for columns used in WHERE clauses.
 
