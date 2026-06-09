@@ -1,0 +1,65 @@
+
+⚠️  [env] WARNING: JWT_SECRET is using the .env.example placeholder.
+   This is fine for local dev but MUST be changed before deploying.
+   Generate one: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+
+⚠️  [env] WARNING: REFRESH_TOKEN_SECRET is using the .env.example placeholder.
+   This is fine for local dev but MUST be changed before deploying.
+   Generate one: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+
+⚠️  [env] WARNING: HMAC_SECRET is using the .env.example placeholder.
+   This is fine for local dev but MUST be changed before deploying.
+   Generate one: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+[34m[SQL][0m Executing (default): SELECT 1+1 AS result
+PostgreSQL connected via Sequelize
+{"ts":"2026-05-27T09:07:50.209Z","level":"info","msg":"EMS backend running","meta":{"environment":"development","port":5000,"corsOrigins":["http://localhost:5173"],"health":"http://localhost:5000/api/health"}}
+[0mGET /api/events/open [33m401[0m 7.480 ms - 81[0m
+[0mGET /api/attendee/register [33m401[0m 0.538 ms - 81[0m
+[0mGET /api/attendee/schedule [33m401[0m 0.353 ms - 81[0m
+[0mGET /api/attendee/attendance [33m401[0m 0.285 ms - 81[0m
+[0mGET /api/attendee/notifications [33m401[0m 0.658 ms - 81[0m
+[34m[SQL][0m Executing (default): SELECT "id", "title", "description", "date", "venue", "status", "image_url" AS "imageUrl", "capacity", "created_by" AS "createdBy", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "events" AS "Event" WHERE "Event"."id" = 3;
+[34m[SQL][0m Executing (default): SELECT count(*) AS "count" FROM "registrations" AS "Registration" WHERE "Registration"."status" != 'Cancelled' AND "Registration"."event_id" = 3;
+[34m[SQL][0m Executing (default): SELECT "id", "user_id" AS "userId", "event_id" AS "eventId", "status", "session_id" AS "sessionId", "registered_at" AS "registeredAt", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "registrations" AS "Registration" WHERE "Registration"."user_id" = 3 AND "Registration"."event_id" = 3 LIMIT 1;
+[34m[SQL][0m Executing (default): INSERT INTO "registrations" ("id","user_id","event_id","status","registered_at","created_at","updated_at") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6) RETURNING "id","user_id","event_id","status","session_id","registered_at","created_at","updated_at";
+[34m[SQL][0m Executing (default): INSERT INTO "activity_logs" ("id","user_id","action","entity_type","entity_id","description","metadata") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6) RETURNING "id","user_id","action","entity_type","entity_id","description","metadata";
+[0mPOST /api/attendee/register [32m201[0m 58.210 ms - 41[0m
+[34m[SQL][0m Executing (default): SELECT "Attendance"."id", "Attendance"."user_id" AS "userId", "Attendance"."session_id" AS "sessionId", "Attendance"."status", "Attendance"."check_in_time" AS "checkInTime", "Attendance"."check_out_time" AS "checkOutTime", "Attendance"."created_at" AS "createdAt", "Attendance"."updated_at" AS "updatedAt", "session"."id" AS "session.id", "session"."title" AS "session.title", "session"."name" AS "session.name", "session->event"."id" AS "session.event.id", "session->event"."title" AS "session.event.title" FROM "attendances" AS "Attendance" LEFT OUTER JOIN "sessions" AS "session" ON "Attendance"."session_id" = "session"."id" LEFT OUTER JOIN "events" AS "session->event" ON "session"."event_id" = "session->event"."id" WHERE "Attendance"."user_id" = 3 ORDER BY "checkInTime" DESC;
+[0mGET /api/attendee/attendance [36m304[0m 17.156 ms - -[0m
+[34m[SQL][0m Executing (default): SELECT "Attendance"."id", "Attendance"."user_id" AS "userId", "Attendance"."session_id" AS "sessionId", "Attendance"."status", "Attendance"."check_in_time" AS "checkInTime", "Attendance"."check_out_time" AS "checkOutTime", "Attendance"."created_at" AS "createdAt", "Attendance"."updated_at" AS "updatedAt", "session"."id" AS "session.id", "session"."title" AS "session.title", "session"."name" AS "session.name", "session->event"."id" AS "session.event.id", "session->event"."title" AS "session.event.title" FROM "attendances" AS "Attendance" LEFT OUTER JOIN "sessions" AS "session" ON "Attendance"."session_id" = "session"."id" LEFT OUTER JOIN "events" AS "session->event" ON "session"."event_id" = "session->event"."id" WHERE "Attendance"."user_id" = 3 ORDER BY "checkInTime" DESC;
+[0mGET /api/attendee/attendance [36m304[0m 4.766 ms - -[0m
+[34m[SQL][0m Executing (default): SELECT "Event"."id", "Event"."title", "Event"."description", "Event"."date", "Event"."venue", "Event"."capacity", "Event"."status", "registrations"."id" AS "registrations.id", "registrations"."user_id" AS "registrations.userId", "registrations"."status" AS "registrations.status" FROM "events" AS "Event" LEFT OUTER JOIN "registrations" AS "registrations" ON "Event"."id" = "registrations"."event_id" WHERE "Event"."status" IN ('Upcoming', 'Ongoing') ORDER BY "Event"."date" ASC;
+[0mGET /api/events/open [32m200[0m 14.992 ms - 655[0m
+[34m[SQL][0m Executing (default): SELECT "Event"."id", "Event"."title", "Event"."description", "Event"."date", "Event"."venue", "Event"."capacity", "Event"."status", "registrations"."id" AS "registrations.id", "registrations"."user_id" AS "registrations.userId", "registrations"."status" AS "registrations.status" FROM "events" AS "Event" LEFT OUTER JOIN "registrations" AS "registrations" ON "Event"."id" = "registrations"."event_id" WHERE "Event"."status" IN ('Upcoming', 'Ongoing') ORDER BY "Event"."date" ASC;
+[0mGET /api/events/open [36m304[0m 19.027 ms - -[0m
+[34m[SQL][0m Executing (default): SELECT "id", "user_id" AS "userId", "event_id" AS "eventId", "status", "session_id" AS "sessionId", "registered_at" AS "registeredAt", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "registrations" AS "Registration" WHERE "Registration"."user_id" = 3 AND "Registration"."event_id" = 3 LIMIT 1;
+[34m[SQL][0m Executing (default): SELECT "student_id" AS "studentId" FROM "users" AS "User" WHERE "User"."id" = 3;
+[0mGET /api/attendance/qr-code/3 [32m200[0m 13.721 ms - 105[0m
+[34m[SQL][0m Executing (default): SELECT "Event"."id", "Event"."title", "Event"."description", "Event"."date", "Event"."venue", "Event"."capacity", "Event"."status", "registrations"."id" AS "registrations.id", "registrations"."user_id" AS "registrations.userId", "registrations"."status" AS "registrations.status" FROM "events" AS "Event" LEFT OUTER JOIN "registrations" AS "registrations" ON "Event"."id" = "registrations"."event_id" WHERE "Event"."status" IN ('Upcoming', 'Ongoing') ORDER BY "Event"."date" ASC;
+[0mGET /api/events/open [36m304[0m 7.294 ms - -[0m
+[34m[SQL][0m Executing (default): SELECT "Event"."id", "Event"."title", "Event"."description", "Event"."date", "Event"."venue", "Event"."capacity", "Event"."status", "registrations"."id" AS "registrations.id", "registrations"."user_id" AS "registrations.userId", "registrations"."status" AS "registrations.status" FROM "events" AS "Event" LEFT OUTER JOIN "registrations" AS "registrations" ON "Event"."id" = "registrations"."event_id" WHERE "Event"."status" IN ('Upcoming', 'Ongoing') ORDER BY "Event"."date" ASC;
+[0mGET /api/events/open [36m304[0m 4.986 ms - -[0m
+[34m[SQL][0m Executing (default): SELECT "id", "full_name" AS "fullName", "email", "student_id" AS "studentId", "department", "password_hash" AS "passwordHash", "role", "refresh_token" AS "refreshToken", "password_reset_token" AS "passwordResetToken", "password_reset_expiry" AS "passwordResetExpiry", "is_stub" AS "isStub", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "users" AS "User" WHERE "User"."id" = 3;
+[34m[SQL][0m Executing (default): UPDATE "users" SET "refresh_token"=$1,"updated_at"=$2 WHERE "id" = $3
+[0mPOST /api/auth/logout [32m200[0m 401.442 ms - 38[0m
+[34m[SQL][0m Executing (default): SELECT "id", "full_name" AS "fullName", "email", "student_id" AS "studentId", "department", "password_hash" AS "passwordHash", "role", "refresh_token" AS "refreshToken", "password_reset_token" AS "passwordResetToken", "password_reset_expiry" AS "passwordResetExpiry", "is_stub" AS "isStub", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "users" AS "User" WHERE "User"."email" = 'admin@sti.edu';
+[0mPOST /api/auth/login [33m401[0m 379.618 ms - 79[0m
+[0mPOST /api/auth/refresh [33m401[0m 0.453 ms - 88[0m
+[0mPOST /api/auth/logout [32m200[0m 0.468 ms - 38[0m
+[0mPOST /api/auth/logout [32m200[0m 0.291 ms - 38[0m
+[0mPOST /api/auth/login [33m429[0m 1.020 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.400 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.631 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.917 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.371 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.433 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.478 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.259 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.385 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.356 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 1.366 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 0.737 ms - 103[0m
+[0mPOST /api/auth/login [33m429[0m 1.471 ms - 103[0m

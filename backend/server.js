@@ -19,17 +19,38 @@
 
 const env = require('./config/env'); // ← must be first; validates all vars before anything else loads
 
-const express      = require('express');
-const cors         = require('cors');
-const cookieParser = require('cookie-parser');
-const morgan       = require('morgan');
+const express        = require('express');
+const cors           = require('cors');
+const cookieParser   = require('cookie-parser');
+const morgan         = require('morgan');
+const logger         = require('./utils/logger');
+// added Phase 5: 301 HTTP→HTTPS redirect in production
+const httpsRedirect  = require('./middleware/httpsRedirect');
 
 const { connectDB, sequelize } = require('./config/database');
 const authRoutes               = require('./routes/authRoutes');
+// added admin routes for dashboard stats, session attendance, activity log, events crud
+const adminRoutes              = require('./routes/adminRoutes');
+// added Phase 2: attendee management, bulk upload, session assignment
+const attendeeRoutes           = require('./routes/attendeeRoutes');
+// added Phase 3: analytics overview/sessions, report preview/export
+const analyticsRoutes          = require('./routes/analyticsRoutes');
+// added Phase 4: QR scan, SSE live feed, manual override, attendee QR code generation
+const attendanceRoutes         = require('./routes/attendanceRoutes');
+// added Phase 5: /api/health and /api/health/db (replaces inline handler)
+const healthRoutes             = require('./routes/healthRoutes');
+// added Phase 5: Attendee-facing portal routes (events/open, attendee/schedule, etc.)
+const attendeePortalRoutes     = require('./routes/attendeePortalRoutes');
+// added Phase 6: generic, role-agnostic notifications (/api/notifications)
+const notificationRoutes       = require('./routes/notificationRoutes');
 
-// App setup 
+// App setup
 
 const app = express();
+
+// HTTPS redirect — must be the very first middleware so redirects fire before
+// CORS or body parsing add unnecessary overhead on plain-HTTP requests
+app.use(httpsRedirect);
 
 // CORS
 // Parse comma-separated CORS_ORIGIN env var into an array so multiple
@@ -49,7 +70,8 @@ app.use(cors({
 }));
 
 // Body parsing
-app.use(express.json({ limit: '10kb' })); // Reject absurdly large bodies early
+// json limit stays at 10kb for API calls; multer handles multipart (file uploads) independently
+app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
 // Cookies 
@@ -60,20 +82,18 @@ app.use(cookieParser());
 // 'combined' format: Apache log format — better for log aggregation in prod
 app.use(morgan(env.isDevelopment ? 'dev' : 'combined'));
 
-// Health check 
-// Called by Docker, Render, Railway, and load balancers.
-// Returns 200 even if the DB is down — the container is alive, just unhealthy.
-// A separate /api/health/db endpoint can check DB connectivity.
-app.get('/api/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    environment: env.NODE_ENV,
-    timestamp:   new Date().toISOString(),
-  });
-});
-
 // Routes
-app.use('/api/auth', authRoutes);
+// health routes first — no auth required for the shallow ping
+app.use('/api/health', healthRoutes);
+app.use('/api/auth',  authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', attendeeRoutes);
+app.use('/api/admin', analyticsRoutes);
+app.use('/api/attendance', attendanceRoutes);
+// Attendee portal endpoints — events/open, attendee/schedule, attendee/attendance, etc.
+app.use('/api', attendeePortalRoutes);
+// Generic notifications — any authenticated role, scoped to req.user.id
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 // Catches requests to routes that don't exist.
@@ -96,7 +116,7 @@ app.use((err, _req, res, _next) => {
     });
   }
 
-  console.error('[server] Unhandled error:', err);
+  logger.error('[server] Unhandled error', err);
 
   // Never expose stack traces or internal error details to the client
   const statusCode = err.status || err.statusCode || 500;
@@ -114,31 +134,32 @@ const start = async () => {
   await connectDB();
 
   const server = app.listen(env.PORT, () => {
-    console.log(`\n EMS backend running`);
-    console.log(`   Environment : ${env.NODE_ENV}`);
-    console.log(`   Port        : ${env.PORT}`);
-    console.log(`   CORS origins: ${allowedOrigins.join(', ')}`);
-    console.log(`   API health  : http://localhost:${env.PORT}/api/health\n`);
+    logger.info('EMS backend running', {
+      environment: env.NODE_ENV,
+      port:        env.PORT,
+      corsOrigins: allowedOrigins,
+      health:      `http://localhost:${env.PORT}/api/health`,
+    });
   });
 
   // Graceful shutdown
   const shutdown = async (signal) => {
-    console.log(`\n[server] ${signal} received — shutting down gracefully...`);
+    logger.info(`[server] ${signal} received — shutting down gracefully`);
 
     server.close(async () => {
       try {
         await sequelize.close();
-        console.log('[server] Database connection pool closed.');
+        logger.info('[server] Database connection pool closed.');
       } catch (err) {
-        console.error('[server] Error closing DB pool:', err.message);
+        logger.error('[server] Error closing DB pool', err);
       }
-      console.log('[server] Shutdown complete. Goodbye.');
+      logger.info('[server] Shutdown complete.');
       process.exit(0);
     });
 
     // Force-exit if graceful shutdown takes longer than 10s
     setTimeout(() => {
-      console.error('[server] Graceful shutdown timed out — force exiting.');
+      logger.error('[server] Graceful shutdown timed out — force exiting.');
       process.exit(1);
     }, 10_000);
   };
@@ -148,6 +169,6 @@ const start = async () => {
 };
 
 start().catch((err) => {
-  console.error('[server] Startup failed:', err);
+  logger.error('[server] Startup failed', err);
   process.exit(1);
 });
