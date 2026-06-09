@@ -17,7 +17,7 @@
 
 require('dotenv').config();
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Read a required string variable. Throws if absent or empty.
@@ -70,7 +70,7 @@ const optionalBool = (key, defaultValue) => {
   return val.trim().toLowerCase() === 'true';
 };
 
-// ─── Warn about insecure secrets in production ────────────────────────────────
+// Warn about insecure secrets in production
 
 const PLACEHOLDER_SECRETS = [
   'CHANGE_ME_use_a_long_random_string_at_least_64_chars_in_production',
@@ -96,14 +96,16 @@ const warnIfPlaceholder = (key, value) => {
   }
 };
 
-// ─── Parse & export ──────────────────────────────────────────────────────────
+// Parse & export
 
 const NODE_ENV    = optionalString('NODE_ENV', 'development');
 const JWT_SECRET  = requireString('JWT_SECRET');
 const RT_SECRET   = requireString('REFRESH_TOKEN_SECRET');
+const HMAC_SECRET = requireString('HMAC_SECRET');
 
 warnIfPlaceholder('JWT_SECRET', JWT_SECRET);
 warnIfPlaceholder('REFRESH_TOKEN_SECRET', RT_SECRET);
+warnIfPlaceholder('HMAC_SECRET', HMAC_SECRET);
 
 const env = {
   // Server
@@ -128,6 +130,10 @@ const env = {
 
   // Cookies
   COOKIE_SECURE: optionalBool('COOKIE_SECURE', false),
+
+  // QR Attendance — Phase 4
+  HMAC_SECRET,
+  LATE_THRESHOLD_MINUTES: optionalInt('LATE_THRESHOLD_MINUTES', 15),
 
   // Convenience booleans
   isProduction:  NODE_ENV === 'production',
